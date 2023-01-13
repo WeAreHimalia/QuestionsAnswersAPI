@@ -1,4 +1,5 @@
 const express = require('express')
+const db = require('./SCHEMAS/primarydb.js')
 const port = 8080
 
 const app = express()
