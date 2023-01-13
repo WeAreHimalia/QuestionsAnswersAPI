@@ -8,17 +8,34 @@ db.on("error", console.error.bind(console, "MongoDB connection error:"));
 // Define a schema
 const Schema = mongoose.Schema;
 
+const AnswerSchema = new Schema({
+  asnwer_id: Number,
+  body: String,
+  date: Date,
+  answerer_name: String,
+  helpfulness: Number,
+  photos: Array
+})
+
 const QusetionSchema = new Schema({
-  product_id: String,
   question_id: Number,
   question_body: String,
   question_date: Date,
   asker_name: String,
   question_helpfulness: Number,
-  reported: Boolean
+  reported: Boolean,
+  answers: [AnswerSchema]
 })
 
-// Compile model from schema
-const Products = mongoose.model("Products", ProductsSchema);
+const QA = new Schema({
+  product_id: String,
+  results[QusetionSchema]
+})
 
-module.exports = Products;
+
+// Compile model from schema
+const Question = mongoose.model("Questions", QusetionSchema)
+const Answer = mongoose.model("Answers", AnswerSchema)
+const QA = mongoose.model("QandAs", QA)
+
+module.exports = { Question, Answer, QA }
