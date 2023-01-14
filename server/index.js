@@ -1,5 +1,5 @@
 const express = require('express')
-const db = require('./SCHEMAS/primarydb.js')
+const db = require('./SCHEMAS/mongodb.js')
 const port = 3000
 
 const app = express()

@@ -33,11 +33,11 @@ const QuestionSchema = new Schema({
 
 
 // Compile model from schema
-const Question = mongoose.model("Questions", QusetionSchema)
+const Question = mongoose.model("Questions", QuestionSchema)
 const Answer = mongoose.model("Answers", AnswerSchema)
 
 
 // Test join schemas using Mongoose
-// Make sure to drop your old database in between manual testing :)
+// Make sure to drop your old database in between manual testing :
 
 module.exports = { Question, Answer }
