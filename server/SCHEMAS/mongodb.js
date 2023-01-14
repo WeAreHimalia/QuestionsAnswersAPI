@@ -20,7 +20,7 @@ const AnswerSchema = new Schema({
   question_ref: { type: Schema.Types.ObjectId, ref: "Question" }
 })
 
-const QusetionSchema = new Schema({
+const QuestionSchema = new Schema({
   product_id: String,
   question_id: Number,
   question_body: String,
