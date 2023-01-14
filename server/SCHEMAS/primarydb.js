@@ -10,48 +10,51 @@ db.on("error", console.error.bind(console, "MongoDB connection error:"))
 // Define schemas
 const Schema = mongoose.Schema
 
-const AnswerSchema = new Schema ({
+const AnswerSchema = new Schema({
   asnwer_id: Number,
   body: String,
   date: Date,
   answerer_name: String,
   helpfulness: Number,
   photos: Array,
-  question_ref: { type: Schema.Types.ObjectId, ref: "Questions" }
+  question_ref: { type: Schema.Types.ObjectId, ref: "Question" }
 })
 
-const QusetionSchema = new Schema ({
+const QusetionSchema = new Schema({
   question_id: Number,
   question_body: String,
   question_date: Date,
   asker_name: String,
   question_helpfulness: Number,
   reported: Boolean,
-  answers: { type: Schema.Types.ObjectId, ref: "Answers" },
-  product_ref: { type: Schema.Types.ObjectId, ref: "QandAs" }
+  answers: [{ type: Schema.Types.ObjectId, ref: "Answer" }],
+  product_ref: { type: Schema.Types.ObjectId, ref: "QA" }
 })
 
-const QASchema = new Schema ({
+const QASchema = new Schema({
   product_id: String,
-  results: [{ type: Schema.Types.ObjectId, ref: "Questions" }]
+  results: [{ type: Schema.Types.ObjectId, ref: "Question" }]
 })
 
 
 // Compile model from schema
-const Answer = mongoose.model("Answers", AnswerSchema)
-const Question = mongoose.model("Questions", QusetionSchema)
 const QA = mongoose.model("QandAs", QASchema)
+const Question = mongoose.model("Questions", QusetionSchema)
+const Answer = mongoose.model("Answers", AnswerSchema)
 
-// Attempt to join schemas using Mongoose
+
+// Test join schemas using Mongoose
 // Make sure to drop your old database in between manual testing :)
 
 // let sampleData = async () => {
 //   try {
-//     const product = await QA.create({
+//     let product = await QA.create({
+//       _id: new mongoose.Types.ObjectId(),
 //       product_id: 123
 //     })
 
-//     const q1 = await Question.create({
+//     let q1 = await Question.create({
+//       _id: new mongoose.Types.ObjectId(),
 //       question_id: 12345,
 //       question_body: 'test',
 //       question_date: '2022-08-21T00:00:00.000Z',
@@ -61,7 +64,8 @@ const QA = mongoose.model("QandAs", QASchema)
 //       product_ref: product._id
 //     })
 
-//     const q2 = await Question.create({
+//     let q2 = await Question.create({
+//       _id: new mongoose.Types.ObjectId(),
 //       question_id: 12333,
 //       question_body: 'test-2',
 //       question_date: '2022-08-21T00:00:00.000Z',
@@ -71,7 +75,8 @@ const QA = mongoose.model("QandAs", QASchema)
 //       product_ref: product._id
 //     })
 
-//     const a1 = await Answer.create({
+//     let a1 = await Answer.create({
+//       _id: new mongoose.Types.ObjectId(),
 //       asnwer_id: 111,
 //       body: 'test-a',
 //       date: '2022-08-21T00:00:00.000Z',
@@ -81,7 +86,8 @@ const QA = mongoose.model("QandAs", QASchema)
 //       question_ref: q1._id
 //     })
 
-//     const a2 = await Answer.create({
+//     let a2 = await Answer.create({
+//       _id: new mongoose.Types.ObjectId(),
 //       asnwer_id: 114,
 //       body: 'test-a-2',
 //       date: '2022-08-21T00:00:00.000Z',
@@ -91,37 +97,20 @@ const QA = mongoose.model("QandAs", QASchema)
 //       question_ref: q2._id
 //     })
 
-//     await Question.find().populate({
-//       'path': 'answers',
-//       'match': { 'question_ref': q1._id }
-//     })
+//     Question.find()
+//       .populate({
+//         path: 'answers',
+//         match: { question_ref: q1._id }
+//       })
 //       .exec((err, question) => {
 //         if (err) {
-//           console.log('err in populate question')
+//           console.log('err in question populate', err)
 //         }
-//         console.log('results in quesiton 1', question)
-//       })
-
-//     await Question.findOne({ question_id: 12333 })
-//       .populate('answers')
-//       .exec((err, question) => {
-//         if (err) {
-//           console.log('err in populate question')
-//         }
-//         console.log('results in quesiton 2', question)
-//       })
-
-//     await QA.findOne({ product_ref: product._id })
-//       .populate('results')
-//       .exec((err, product) => {
-//         if (err) {
-//           console.log('err in populate qa')
-//         }
-//         console.log('results in product', product)
+//         console.log('question result', question)
 //       })
 
 //   } catch (err) {
-//     console.log('err somewhere in creation')
+//     console.log('err somewhere in creation', err)
 //   }
 // }
 
