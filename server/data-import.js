@@ -51,8 +51,8 @@ let readWriteAnswerPhotos = async () => {
 
 // initial load of data
 let initialLoad = async () => {
-  // await readWriteQuestions()
-  await readWriteAnswers()
+  await readWriteQuestions()
+  // await readWriteAnswers()
   // await readWriteAnswerPhotos()
 }
 
