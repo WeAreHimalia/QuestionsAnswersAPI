@@ -2,14 +2,14 @@ const csv = require('csvtojson')
 const db = require('./SCHEMAS/mongodb.js')
 
 // sample data
-const questionSample = '/Users/mindiweik/Desktop/HackReactor/SDC/QuestionsAnswersAPI/data/sample/questions_sample.csv'
-const answerSample = '/Users/mindiweik/Desktop/HackReactor/SDC/QuestionsAnswersAPI/data/sample/answers_sample.csv'
-const answerPhotoSample = '/Users/mindiweik/Desktop/HackReactor/SDC/QuestionsAnswersAPI/data/sample/answers_photos_sample.csv'
+const questionSample = '/Users/mindiweik/Desktop/SDC/QuestionsAnswersAPI/data/sample/questions_sample.csv'
+const answerSample = '/Users/mindiweik/Desktop/SDC/QuestionsAnswersAPI/data/sample/answers_sample.csv'
+const answerPhotoSample = '/Users/mindiweik/Desktop/SDC/QuestionsAnswersAPI/data/sample/answers_photos_sample.csv'
 
 // final data
-const questionData = '/Users/mindiweik/Desktop/HackReactor/SDC/QuestionsAnswersAPI/data/final/questions.csv'
-const answerData = '/Users/mindiweik/Desktop/HackReactor/SDC/QuestionsAnswersAPI/data/final/answers.csv'
-const answerPhotoData = '/Users/mindiweik/Desktop/HackReactor/SDC/QuestionsAnswersAPI/data/final/answers_photos.csv'
+const questionData = '/Users/mindiweik/Desktop/SDC/QuestionsAnswersAPI/data/final/questions.csv'
+const answerData = '/Users/mindiweik/Desktop/SDC/QuestionsAnswersAPI/data/final/answers.csv'
+const answerPhotoData = '/Users/mindiweik/Desktop/SDC/QuestionsAnswersAPI/data/final/answers_photos.csv'
 
 
 // start with insertion of question data
@@ -52,10 +52,18 @@ let readWriteAnswerPhotos = async () => {
 // initial load of data
 let initialLoad = async () => {
   await readWriteQuestions()
-  // await readWriteAnswers()
-  // await readWriteAnswerPhotos()
 }
 
-initialLoad()
+let secondLoad = async () => {
+  await readWriteAnswers()
+}
+
+let thirdLoad = async () => {
+  await readWriteAnswerPhotos()
+}
+
+// initialLoad()
+// secondLoad()
+thirdLoad()
 
 // module.exports = { readWriteQuestions, readWriteAnswers, readWriteAnswerPhotos }
