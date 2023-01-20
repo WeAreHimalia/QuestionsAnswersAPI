@@ -1,0 +1,10 @@
+id,product_id,body,date_written,asker_name,asker_email,reported,helpful
+1,1,What fabric is the top made of?,1.60E+12,yankeelover,first.last@gmail.com,0,1
+2,1,HEY THIS IS A WEIRD QUESTION!!!!?,1.61E+12,jbilas,first.last@gmail.com,1,4
+3,1,Does this product run big or small?,1.61E+12,jbilas,first.last@gmail.com,0,8
+4,1,How long does it last?,1.59E+12,funnygirl,first.last@gmail.com,0,6
+5,1,Can I wash it?,1.61E+12,cleopatra,first.last@gmail.com,0,7
+6,1,Is it noise cancelling?,1.61E+12,coolkid,first.last@gmail.com,1,19
+7,2,Where is this product made?,1.59E+12,iluvcatz,first.last@gmail.com,0,0
+8,2,Is this product sustainable?,1.61E+12,coolkid,first.last@gmail.com,1,5
+9,2,"I'm allergic to dye #17, does this product contain any?",1.60E+12,l33tgamer,first.last@gmail.com,0,6
