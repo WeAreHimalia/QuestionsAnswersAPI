@@ -83,21 +83,41 @@ let answerInsert = async (question_id, data) => {
     let complete = await QandA.findByIdAndUpdate(id, { answers }, { returnDocument: 'after' })
     console.log(complete)
   }
-
 }
 
-let answerPhotoInsert = async (answerId, data) => {
-  // query the db for the answer
+let answerPhotoInsert = async (answerId, url) => {
+  // query the db for the answer and needed info
+  console.log(answer_id, url)
+  let query = { answer_id }
+  // let answer = await QandA.find(query)
+  // let id = answer[0]._id
+  // let photosArr = answer[0].answer_photos
+
+  console.log('sample', query, url)
 
   // add the image url to the answer photos array for this answer
+
+  // if not present, insert the answer to the array from the question
+  // let isPresent = false
+  // answers.forEach(answer => {
+  //   if (!isPresent) {
+  //     if (answer.answer_id === parseInt(data.id)) {
+  //       isPresent = true
+  //     }
+  //   }
+  // })
+
+  // if (!isPresent) {
+  //   answers.push(answer)
+  //   // add the answer to the asnwers array for this question
+  //   let complete = await QandA.findByIdAndUpdate(id, { answers }, { returnDocument: 'after' })
+  //   console.log(complete)
+  // }
 }
 
 // Compile model from schema
 const QandA = mongoose.model("QandAs", QandASchema)
 const Answer = mongoose.model("Answers", AnswerSchema)
 
-
-// Test join schemas using Mongoose
-// Make sure to drop your old database in between manual testing :
 
 module.exports = { QandA, Answer, insert, answerInsert, answerPhotoInsert }

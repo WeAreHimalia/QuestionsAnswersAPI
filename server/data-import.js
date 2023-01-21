@@ -46,24 +46,22 @@ let readWriteAnswers = async () => {
 // finally, add the photo urls for the answers
 let readWriteAnswerPhotos = async () => {
   console.log('photos')
+  await csv().fromFile(answerPhotoSample)
+    .subscribe((json, lineNum) => {
+      return new Promise((resolve, reject) => {
+        let answer_id = json.answer_id
+        let url = json.url
+        resolve(db.answerPhotoInsert(answer_id, url))
+      })
+    })
 }
 
 
 // initial load of data
-let initialLoad = async () => {
-  await readWriteQuestions()
-}
-
-let secondLoad = async () => {
-  await readWriteAnswers()
-}
-
-let thirdLoad = async () => {
-  await readWriteAnswerPhotos()
-}
+let initialLoad = async () => { await readWriteQuestions() }
+let secondLoad = async () => { await readWriteAnswers() }
+let thirdLoad = async () => { await readWriteAnswerPhotos() }
 
 // initialLoad()
-// secondLoad()
-thirdLoad()
-
-// module.exports = { readWriteQuestions, readWriteAnswers, readWriteAnswerPhotos }
+secondLoad()
+// thirdLoad()
