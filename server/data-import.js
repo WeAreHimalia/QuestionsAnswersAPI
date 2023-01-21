@@ -14,6 +14,7 @@ const answerPhotoData = '/Users/mindiweik/Desktop/SDC/QuestionsAnswersAPI/data/f
 
 // start with insertion of question data
 let readWriteQuestions = async () => {
+  console.log('start questions import')
   let count = -1
   try {
     await csv().fromFile(questionData)
@@ -22,7 +23,7 @@ let readWriteQuestions = async () => {
 
           count++
           if (count % 10000 === 0) {
-            console.log('line number', count)
+            console.log('line number in questions', count)
           }
 
           resolve(db.insert({
@@ -46,6 +47,7 @@ let readWriteQuestions = async () => {
 
 // next add the answer data
 let readWriteAnswers = async () => {
+  console.log('start answers import')
   let count = -1
   try {
     await csv().fromFile(answerData)
@@ -54,7 +56,7 @@ let readWriteAnswers = async () => {
 
           count++
           if (count % 10000 === 0) {
-            console.log('line number', count)
+            console.log('line number in import answers', count)
           }
 
           let question_id = json.question_id
@@ -69,6 +71,7 @@ let readWriteAnswers = async () => {
 
 // finally, add the photo urls for the answers
 let readWriteAnswerPhotos = async () => {
+  console.log('start questions import')
   let count = -1
   try {
     await csv().fromFile(answerPhotoData)
@@ -77,7 +80,7 @@ let readWriteAnswerPhotos = async () => {
 
           count++
           if (count % 10000 === 0) {
-            console.log('line number', count)
+            console.log('line number in import answer photos', count)
           }
 
           resolve(db.answerPhotoInsert(json))
@@ -95,6 +98,10 @@ let initialLoad = async () => { await readWriteQuestions() }
 let secondLoad = async () => { await readWriteAnswers() }
 let thirdLoad = async () => { await readWriteAnswerPhotos() }
 
-// initialLoad()
-// secondLoad()
-// thirdLoad()
+let loadAllThree = async () => {
+  await initialLoad()
+  await secondLoad()
+  await thirdLoad()
+}
+
+loadAllThree()

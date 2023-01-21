@@ -13,7 +13,6 @@ const Schema = mongoose.Schema
 const AnswerSchema = new Schema({
   answer_id: {
     type: Number,
-    index: true,
     unique: true,
     sparse: true
   },
