@@ -85,34 +85,55 @@ let answerInsert = async (question_id, data) => {
   }
 }
 
-let answerPhotoInsert = async (answerId, url) => {
+let answerPhotoInsert = async (data) => {
+  let url = data.url
+
   // query the db for the answer and needed info
-  console.log(answer_id, url)
-  let query = { answer_id }
-  // let answer = await QandA.find(query)
-  // let id = answer[0]._id
-  // let photosArr = answer[0].answer_photos
+  let question = await QandA.findOne({
+    'answers': {
+      $elemMatch: {
+        'answer_id': data.answer_id
+      }
+    }
+  })
 
-  console.log('sample', query, url)
+  let id = question._id
+  let answers = question.answers
+  let newAnswer, photosArr
 
-  // add the image url to the answer photos array for this answer
+  answers.forEach((answer, index) => {
+    if (parseInt(data.answer_id) === answer.answer_id) {
+      newAnswer = answer
+      photosArr = answer.answer_photos
+      answers.splice(index, 1)
+    }
+  })
 
   // if not present, insert the answer to the array from the question
-  // let isPresent = false
-  // answers.forEach(answer => {
-  //   if (!isPresent) {
-  //     if (answer.answer_id === parseInt(data.id)) {
-  //       isPresent = true
-  //     }
-  //   }
-  // })
+  let isPresent = false
+  photosArr.forEach(photoUrl => {
+    if (!isPresent) {
+      if (photoUrl === url) {
+        isPresent = true
+      }
+    }
+  })
 
-  // if (!isPresent) {
-  //   answers.push(answer)
-  //   // add the answer to the asnwers array for this question
-  //   let complete = await QandA.findByIdAndUpdate(id, { answers }, { returnDocument: 'after' })
-  //   console.log(complete)
-  // }
+  if (!isPresent) {
+    // add the image url to the answer photos array
+    photosArr.push(url)
+    newAnswer.answer_photos = photosArr
+
+    // add the updated answer to the answers array
+    answers.push(newAnswer)
+
+    // update the answers for the question
+    question.answers = answers
+
+    let complete = await QandA.findByIdAndUpdate(id, question, { returnDocument: 'after' })
+    console.log(complete)
+  }
+
 }
 
 // Compile model from schema
