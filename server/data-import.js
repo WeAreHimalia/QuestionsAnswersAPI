@@ -16,12 +16,12 @@ const answerPhotoData = '/Users/mindiweik/Desktop/SDC/QuestionsAnswersAPI/data/f
 let readWriteQuestions = async () => {
   let count = -1
   try {
-    await csv().fromFile(questionSample)
+    await csv().fromFile(questionData)
       .subscribe((json, lineNum) => {
         return new Promise((resolve, reject) => {
 
           count++
-          if (count % 1000) {
+          if (count % 10000 === 0) {
             console.log('line number', count)
           }
 
@@ -48,9 +48,15 @@ let readWriteQuestions = async () => {
 let readWriteAnswers = async () => {
   let count = -1
   try {
-    await csv().fromFile(answerSample)
+    await csv().fromFile(answerData)
       .subscribe((json, lineNum) => {
         return new Promise((resolve, reject) => {
+
+          count++
+          if (count % 10000 === 0) {
+            console.log('line number', count)
+          }
+
           let question_id = json.question_id
           resolve(db.answerInsert(question_id, json))
         })
@@ -63,10 +69,17 @@ let readWriteAnswers = async () => {
 
 // finally, add the photo urls for the answers
 let readWriteAnswerPhotos = async () => {
+  let count = -1
   try {
-    await csv().fromFile(answerPhotoSample)
+    await csv().fromFile(answerPhotoData)
       .subscribe((json, lineNum) => {
         return new Promise((resolve, reject) => {
+
+          count++
+          if (count % 10000 === 0) {
+            console.log('line number', count)
+          }
+
           resolve(db.answerPhotoInsert(json))
         })
       })

@@ -44,7 +44,7 @@ const QandASchema = new Schema({
 
 let insert = async (data) => {
   await QandA.create(data)
-    .then(() => console.log('saved insert'))
+    .then(() => {})
     .catch((err) => console.log('err in insert', err.message))
 }
 
@@ -80,8 +80,7 @@ let answerInsert = async (question_id, data) => {
   if (!isPresent) {
     answers.push(answer)
     // add the answer to the asnwers array for this question
-    let complete = await QandA.findByIdAndUpdate(id, { answers }, { returnDocument: 'after' })
-    console.log(complete)
+    await QandA.findByIdAndUpdate(id, { answers })
   }
 }
 
@@ -130,8 +129,7 @@ let answerPhotoInsert = async (data) => {
     // update the answers for the question
     question.answers = answers
 
-    let complete = await QandA.findByIdAndUpdate(id, question, { returnDocument: 'after' })
-    console.log(complete)
+    await QandA.findByIdAndUpdate(id, question)
   }
 
 }
