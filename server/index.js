@@ -4,8 +4,11 @@ const port = 3000
 
 const app = express()
 
-app.get('/', (req, res) => {
-  res.send('Hello world!')
+// get questions
+app.get('/qa/questions', async (req, res) => {
+  let product_id = req.body.product_id
+  let questions = await db.questions(product_id)
+  res.send(product_id)
 })
 
 app.listen(port, () => {

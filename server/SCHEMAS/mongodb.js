@@ -41,6 +41,11 @@ const QandASchema = new Schema({
   answers: [AnswerSchema]
 })
 
+// get all questions
+let questions = async (product_id) => {
+  return await QandA.find({ product_id }).exec()
+}
+
 // insert a new document as a question
 let insert = async (data) => {
   await QandA.create(data).catch((err) => console.log('err in insert', err.message))
@@ -133,9 +138,45 @@ let answerPhotoInsert = async (data) => {
   }
 }
 
+// increment a helpful question
+let helpfulQuestion = async (question_id) => {
+  // query the db for the question and needed info
+  let query = { question_id }
+  let question = await QandA.find(query)
+  let id = question[0]._id
+
+
+  await QandA.findByIdAndUpdate()
+}
+
+// increment a helpful answer
+let helpfulAnswer = async (answer_id) => {
+
+}
+
+// report a question
+let reportedQuestion = async (question_id) => {
+
+}
+
+// report an answer
+let reportedAnswer = async (answer_id) => {
+
+}
+
 // Compile model from schema
 const QandA = mongoose.model("QandAs", QandASchema)
 const Answer = mongoose.model("Answers", AnswerSchema)
 
 
-module.exports = { QandA, Answer, insert, answerInsert, answerPhotoInsert }
+module.exports = {
+  QandA,
+  Answer,
+  insert,
+  answerInsert,
+  answerPhotoInsert,
+  helpfulQuestion,
+  helpfulAnswer,
+  reportedQuestion,
+  reportedAnswer
+}
