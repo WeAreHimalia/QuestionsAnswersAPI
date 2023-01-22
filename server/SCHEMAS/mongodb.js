@@ -43,7 +43,7 @@ const QandASchema = new Schema({
 
 // get all questions
 let questions = async (product_id) => {
-  return await QandA.find({ product_id }).exec()
+  return await QandA.find({ product_id }).lean()
 }
 
 // insert a new document as a question
@@ -172,6 +172,7 @@ const Answer = mongoose.model("Answers", AnswerSchema)
 module.exports = {
   QandA,
   Answer,
+  questions,
   insert,
   answerInsert,
   answerPhotoInsert,
