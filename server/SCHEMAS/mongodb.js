@@ -41,12 +41,12 @@ const QandASchema = new Schema({
   answers: [AnswerSchema]
 })
 
+// insert a new document as a question
 let insert = async (data) => {
-  await QandA.create(data)
-    .then(() => {})
-    .catch((err) => console.log('err in insert', err.message))
+  await QandA.create(data).catch((err) => console.log('err in insert', err.message))
 }
 
+// insert an answer into the provided question document
 let answerInsert = async (question_id, data) => {
   // query the db for the question and needed info
   let query = { question_id }
@@ -83,6 +83,7 @@ let answerInsert = async (question_id, data) => {
   }
 }
 
+// add an image to a given answer
 let answerPhotoInsert = async (data) => {
   let url = data.url
 
@@ -130,7 +131,6 @@ let answerPhotoInsert = async (data) => {
 
     await QandA.findByIdAndUpdate(id, question)
   }
-
 }
 
 // Compile model from schema
