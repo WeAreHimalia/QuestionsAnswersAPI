@@ -43,12 +43,16 @@ const QandASchema = new Schema({
 
 // get all questions
 let questions = async (product_id, count) => {
-  return await QandA.find({ product_id, question_reported: false }).limit(count).lean()
+  return await QandA.find({ product_id, question_reported: false }).limit(count).lean().catch(err => console.log('err in get questions', err.message))
 }
 
 // get all answers for a specific question
 let answers = async (question_id) => {
-  return await QandA.findOne({ question_id }).lean()
+  return await QandA.findOne({ question_id }).lean().catch(err => console.log('err in get answers', err.message))
+}
+
+let count = async () => {
+  return await QandA.countDocuments().catch(err => console.log('err in count', err.message))
 }
 
 // insert a new document as a question
@@ -60,7 +64,7 @@ let insert = async (data) => {
 let answerInsert = async (question_id, data) => {
   // query the db for the question and needed info
   let query = { question_id }
-  let question = await QandA.find(query)
+  let question = await QandA.find(query).catch(err => console.log('err in question search', err.message))
   let id = question[0]._id
   let answers = question[0].answers
 
@@ -89,7 +93,7 @@ let answerInsert = async (question_id, data) => {
   if (!isPresent) {
     answers.push(answer)
     // add the answer to the asnwers array for this question
-    await QandA.findByIdAndUpdate(id, { answers })
+    await QandA.findByIdAndUpdate(id, { answers }).catch(err => console.log('err in answer update', err.message))
   }
 }
 
@@ -105,6 +109,7 @@ let answerPhotoInsert = async (data) => {
       }
     }
   })
+    .catch(err => console.log('err in question search', err.message))
 
   let id = question._id
   let answers = question.answers
@@ -139,7 +144,7 @@ let answerPhotoInsert = async (data) => {
     // update the answers for the question
     question.answers = answers
 
-    await QandA.findByIdAndUpdate(id, question)
+    await QandA.findByIdAndUpdate(id, question).catch(err => console.log('err in answer photo update', err.message))
   }
 }
 
@@ -147,11 +152,11 @@ let answerPhotoInsert = async (data) => {
 let helpfulQuestion = async (question_id) => {
   // query the db for the question and needed info
   let query = { question_id }
-  let question = await QandA.find(query)
+  let question = await QandA.find(query).catch(err => console.log('err in question search', err.message))
   let id = question[0]._id
 
 
-  await QandA.findByIdAndUpdate()
+  await QandA.findByIdAndUpdate().catch(err => console.log('err in helpful update', err.message))
 }
 
 // increment a helpful answer
@@ -163,8 +168,7 @@ let helpfulAnswer = async (answer_id) => {
       }
     }
   })
-
-  console.log(question)
+  .catch(err => console.log('err in question search', err.message))
 }
 
 // report a question
@@ -185,6 +189,7 @@ const Answer = mongoose.model("Answers", AnswerSchema)
 module.exports = {
   QandA,
   Answer,
+  count,
   questions,
   answers,
   insert,
