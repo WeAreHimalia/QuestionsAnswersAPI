@@ -42,8 +42,13 @@ const QandASchema = new Schema({
 })
 
 // get all questions
-let questions = async (product_id) => {
-  return await QandA.find({ product_id }).lean()
+let questions = async (product_id, count) => {
+  return await QandA.find({ product_id, question_reported: false }).limit(count).lean()
+}
+
+// get all answers for a specific question
+let answers = async (question_id) => {
+  return await QandA.findOne({ question_id }).lean()
 }
 
 // insert a new document as a question
@@ -151,7 +156,15 @@ let helpfulQuestion = async (question_id) => {
 
 // increment a helpful answer
 let helpfulAnswer = async (answer_id) => {
+  let question = await QandA.findOne({
+    'answers': {
+      $elemMatch: {
+        'answer_id': answer_id
+      }
+    }
+  })
 
+  console.log(question)
 }
 
 // report a question
@@ -173,6 +186,7 @@ module.exports = {
   QandA,
   Answer,
   questions,
+  answers,
   insert,
   answerInsert,
   answerPhotoInsert,
