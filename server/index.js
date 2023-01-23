@@ -124,8 +124,24 @@ app.post('qa/questions', async (req, res) => {
 })
 
 // add a new answer
-app.post('qa/questions/:question_id/', (req, res) => {
+app.post('qa/questions/:question_id/answers', (req, res) => {
   try {
+    let question_id = req.params.question_id
+    let body = req.body.body
+    let name = req.body.name
+    let email = req.body.email
+    let photos = req.body.photos
+
+    let data = {
+      answer_id: 'need count',
+      answer_body: body,
+      answer_date: new Date(),
+      answerer_name: name,
+      answerer_email: email,
+      answer_reported: false,
+      answer_helpfulness: 0,
+      answer_photos: photos
+    }
 
     res.sendStatus(204).send('Created')
   }
