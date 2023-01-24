@@ -93,6 +93,18 @@ app.get('/qa/questions/:question_id/answers', async (req, res) => {
   }
 })
 
+app.get('count/answers', async (req, res) => {
+  try {
+    console.log('test')
+    let count = db.countAnswers()
+    console.log('count', count)
+    res.send(count)
+  }
+  catch (err) {
+    console.log('answer count sort error', err)
+  }
+})
+
 // add a new question
 app.post('qa/questions', async (req, res) => {
   try {

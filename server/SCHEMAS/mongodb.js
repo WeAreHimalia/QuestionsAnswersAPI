@@ -55,6 +55,12 @@ let count = async () => {
   return await QandA.countDocuments().catch(err => console.log('err in count', err.message))
 }
 
+let countAnswers = async () => {
+  let biggest = await QandA.find({}).sort({ 'answers': { 'answer_id': -1 } }).exec().catch(err => console.log(err))
+  console.log('biggest', biggest)
+  return biggest
+}
+
 // insert a new document as a question
 let insert = async (data) => {
   await QandA.create(data).catch((err) => console.log('err in insert', err.message))
@@ -190,6 +196,7 @@ module.exports = {
   QandA,
   Answer,
   count,
+  countAnswers,
   questions,
   answers,
   insert,
