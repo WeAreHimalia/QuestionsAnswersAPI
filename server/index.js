@@ -150,7 +150,7 @@ app.put('/qa/questions/:question_id/helpful', async (req, res) => {
     let question_id = req.params.question_id
     await db.helpfulQuestion(question_id)
 
-    res.status(204).send('Created')
+    res.send('Created')
   }
   catch (err) {
     console.log('err in helpful question', err.message)
@@ -161,7 +161,7 @@ app.put('/qa/questions/:question_id/helpful', async (req, res) => {
 app.put('/qa/questions/:answer_id/helpful', async (req, res) => {
   try {
 
-    res.sendStatus(204).send('Created')
+    res.send('Created')
   }
   catch (err) {
     console.log('err in helpful answer', err.message)
@@ -171,8 +171,10 @@ app.put('/qa/questions/:answer_id/helpful', async (req, res) => {
 // report a question
 app.put('/qa/questions/:question_id/report', async (req, res) => {
   try {
+    let question_id = req.params.question_id
+    await db.reportedQuestion(question_id)
 
-    res.sendStatus(204).send('Created')
+    res.send('Created')
   }
   catch (err) {
     console.log('err in reported question', err.message)

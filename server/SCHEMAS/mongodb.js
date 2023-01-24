@@ -213,7 +213,13 @@ let helpfulAnswer = async (answer_id) => {
 // report a question
 let reportedQuestion = async (question_id) => {
   try {
+        // query the db for the question and needed info
+        let query = { question_id }
+        let question = await QandA.findOne(query)
+        let id = question._id
+        let question_reported = true /* !question.question_reported */
 
+        await QandA.findByIdAndUpdate(id, { question_reported })
   }
   catch (err) {
     console.log('err in report a question', err.message)
