@@ -43,148 +43,191 @@ const QandASchema = new Schema({
 
 // get all questions
 let questions = async (product_id, count) => {
-  return await QandA.find({ product_id, question_reported: false }).limit(count).lean().catch(err => console.log('err in get questions', err.message))
+  try {
+    return await QandA.find({ product_id, question_reported: false }).limit(count).lean()
+  }
+  catch (err) {
+    console.log('err in get questions', err.message)
+  }
 }
 
 // get all answers for a specific question
 let answers = async (question_id) => {
-  return await QandA.findOne({ question_id }).lean().catch(err => console.log('err in get answers', err.message))
+  try {
+    return await QandA.findOne({ question_id }).lean()
+  }
+  catch (err) {
+    console.log('err in get answers', err.message)
+  }
 }
 
+// identify the next question id
 let count = async () => {
-  return await QandA.countDocuments().catch(err => console.log('err in count', err.message))
-}
-
-let countAnswers = async () => {
-  let biggest = await QandA.find({}).sort({ 'answers': { 'answer_id': -1 } }).exec().catch(err => console.log(err))
-  console.log('biggest', biggest)
-  return biggest
+  try {
+    return await QandA.count()
+  }
+  catch (err) {
+    console.log('err in count', err.message)
+  }
 }
 
 // insert a new document as a question
 let insert = async (data) => {
-  await QandA.create(data).catch((err) => console.log('err in insert', err.message))
+  try {
+    await QandA.create(data)
+  }
+  catch (err) {
+    console.log('err in insert', err.message)
+  }
 }
 
 // insert an answer into the provided question document
 let answerInsert = async (question_id, data) => {
-  // query the db for the question and needed info
-  let query = { question_id }
-  let question = await QandA.find(query).catch(err => console.log('err in question search', err.message))
-  let id = question[0]._id
-  let answers = question[0].answers
+  try {
+    // query the db for the question and needed info
+    let query = { question_id }
+    let question = await QandA.find(query)
+    let id = question[0]._id
+    let answers = question[0].answers
 
-  // setup the new answer data
-  let answer = new Answer({
-    answer_id: data.id,
-    answer_body: data.body,
-    answer_date: data.date_written,
-    answerer_name: data.answerer_name,
-    answerer_email: data.answerer_email,
-    answer_reported: data.reported,
-    answer_helpfulness: data.helpful,
-    answer_photos: []
-  })
+    // setup the new answer data
+    let answer = new Answer({
+      answer_id: data.id,
+      answer_body: data.body,
+      answer_date: data.date_written,
+      answerer_name: data.answerer_name,
+      answerer_email: data.answerer_email,
+      answer_reported: data.reported,
+      answer_helpfulness: data.helpful,
+      answer_photos: []
+    })
 
-  // if not present, insert the answer to the array from the question
-  let isPresent = false
-  answers.forEach(answer => {
-    if (!isPresent) {
-      if (answer.answer_id === parseInt(data.id)) {
-        isPresent = true
+    // if not present, insert the answer to the array from the question
+    let isPresent = false
+    answers.forEach(answer => {
+      if (!isPresent) {
+        if (answer.answer_id === parseInt(data.id)) {
+          isPresent = true
+        }
       }
-    }
-  })
+    })
 
-  if (!isPresent) {
-    answers.push(answer)
-    // add the answer to the asnwers array for this question
-    await QandA.findByIdAndUpdate(id, { answers }).catch(err => console.log('err in answer update', err.message))
+    if (!isPresent) {
+      answers.push(answer)
+      // add the answer to the asnwers array for this question
+      await QandA.findByIdAndUpdate(id, { answers })
+    }
+  }
+  catch (err) {
+    console.log('err in answer insert', err.message)
   }
 }
 
 // add an image to a given answer
 let answerPhotoInsert = async (data) => {
-  let url = data.url
+  try {
+    let url = data.url
 
-  // query the db for the answer and needed info
-  let question = await QandA.findOne({
-    'answers': {
-      $elemMatch: {
-        'answer_id': data.answer_id
+    // query the db for the answer and needed info
+    let question = await QandA.findOne({
+      'answers': {
+        $elemMatch: {
+          'answer_id': data.answer_id
+        }
       }
-    }
-  })
-    .catch(err => console.log('err in question search', err.message))
+    })
 
-  let id = question._id
-  let answers = question.answers
-  let newAnswer, photosArr
+    let id = question._id
+    let answers = question.answers
+    let newAnswer, photosArr
 
-  answers.forEach((answer, index) => {
-    if (parseInt(data.answer_id) === answer.answer_id) {
-      newAnswer = answer
-      photosArr = answer.answer_photos
-      answers.splice(index, 1)
-    }
-  })
+    answers.forEach((answer, index) => {
+      if (parseInt(data.answer_id) === answer.answer_id) {
+        newAnswer = answer
+        photosArr = answer.answer_photos
+        answers.splice(index, 1)
+      }
+    })
 
-  // if not present, insert the answer to the array from the question
-  let isPresent = false
-  photosArr.forEach(photoUrl => {
+    // if not present, insert the answer to the array from the question
+    let isPresent = false
+    photosArr.forEach(photoUrl => {
+      if (!isPresent) {
+        if (photoUrl === url) {
+          isPresent = true
+        }
+      }
+    })
+
     if (!isPresent) {
-      if (photoUrl === url) {
-        isPresent = true
-      }
+      // add the image url to the answer photos array
+      photosArr.push(url)
+      newAnswer.answer_photos = photosArr
+
+      // add the updated answer to the answers array
+      answers.push(newAnswer)
+
+      // update the answers for the question
+      question.answers = answers
+
+      await QandA.findByIdAndUpdate(id, question)
     }
-  })
-
-  if (!isPresent) {
-    // add the image url to the answer photos array
-    photosArr.push(url)
-    newAnswer.answer_photos = photosArr
-
-    // add the updated answer to the answers array
-    answers.push(newAnswer)
-
-    // update the answers for the question
-    question.answers = answers
-
-    await QandA.findByIdAndUpdate(id, question).catch(err => console.log('err in answer photo update', err.message))
+  }
+  catch (err) {
+    console.log('err in answer photos insert', err.message)
   }
 }
 
 // increment a helpful question
 let helpfulQuestion = async (question_id) => {
-  // query the db for the question and needed info
-  let query = { question_id }
-  let question = await QandA.find(query).catch(err => console.log('err in question search', err.message))
-  let id = question[0]._id
+  try {
+    // query the db for the question and needed info
+    let query = { question_id }
+    let question = await QandA.findOne(query)
+    let id = question._id
+    let question_helpfulness = question.question_helpfulness + 1
 
-
-  await QandA.findByIdAndUpdate().catch(err => console.log('err in helpful update', err.message))
+    await QandA.findByIdAndUpdate(id, { question_helpfulness })
+  }
+  catch (err) {
+    console.log('err in helpful question', err.message)
+  }
 }
 
 // increment a helpful answer
 let helpfulAnswer = async (answer_id) => {
-  let question = await QandA.findOne({
-    'answers': {
-      $elemMatch: {
-        'answer_id': answer_id
+  try {
+    let question = await QandA.findOne({
+      'answers': {
+        $elemMatch: {
+          'answer_id': answer_id
+        }
       }
-    }
-  })
-  .catch(err => console.log('err in question search', err.message))
+    })
+  }
+  catch (err) {
+    console.log('err in helpful answer', err.message)
+  }
 }
 
 // report a question
 let reportedQuestion = async (question_id) => {
+  try {
 
+  }
+  catch (err) {
+    console.log('err in report a question', err.message)
+  }
 }
 
 // report an answer
 let reportedAnswer = async (answer_id) => {
+  try {
 
+  }
+  catch (err) {
+    console.log('err in report an answer', err.message)
+  }
 }
 
 // Compile model from schema
@@ -196,7 +239,6 @@ module.exports = {
   QandA,
   Answer,
   count,
-  countAnswers,
   questions,
   answers,
   insert,

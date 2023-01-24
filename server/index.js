@@ -5,12 +5,6 @@ const port = 3050
 
 const app = express()
 
-app.use(bodyParser.json());       // to support JSON-encoded bodies
-app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
-  extended: true
-}));
-
-
 // get questions
 app.get('/qa/questions', async (req, res) => {
   try {
@@ -50,7 +44,7 @@ app.get('/qa/questions', async (req, res) => {
     res.send(final)
   }
   catch (err) {
-    next(err)
+    console.log('err in get questions', err.message)
   }
 })
 
@@ -89,24 +83,12 @@ app.get('/qa/questions/:question_id/answers', async (req, res) => {
     res.send(final)
   }
   catch (err) {
-    next(err)
-  }
-})
-
-app.get('count/answers', async (req, res) => {
-  try {
-    console.log('test')
-    let count = db.countAnswers()
-    console.log('count', count)
-    res.send(count)
-  }
-  catch (err) {
-    console.log('answer count sort error', err)
+    console.log('err in get answers', err.message)
   }
 })
 
 // add a new question
-app.post('qa/questions', async (req, res) => {
+app.post('/qa/questions', async (req, res) => {
   try {
     let body = req.body.body
     let name = req.body.name
@@ -131,12 +113,12 @@ app.post('qa/questions', async (req, res) => {
     res.sendStatus(204).send('Created')
   }
   catch (err) {
-    next(err)
+    console.log('err in posting a question', err.message)
   }
 })
 
 // add a new answer
-app.post('qa/questions/:question_id/answers', (req, res) => {
+app.post('/qa/questions/:question_id/answers', (req, res) => {
   try {
     let question_id = req.params.question_id
     let body = req.body.body
@@ -158,51 +140,53 @@ app.post('qa/questions/:question_id/answers', (req, res) => {
     res.sendStatus(204).send('Created')
   }
   catch (err) {
-    next(err)
+    console.log('err in posting an answer', err.message)
   }
 })
 
 // update helpfulness of question
-app.put('qa/questions/:question_id/helpful', async (req, res) => {
+app.put('/qa/questions/:question_id/helpful', async (req, res) => {
   try {
+    let question_id = req.params.question_id
+    await db.helpfulQuestion(question_id)
 
-    res.sendStatus(204).send('Created')
+    res.status(204).send('Created')
   }
   catch (err) {
-    next(err)
+    console.log('err in helpful question', err.message)
   }
 })
 
 // update helpfulness of answer
-app.put('qa/questions/:answer_id/helpful', async (req, res) => {
+app.put('/qa/questions/:answer_id/helpful', async (req, res) => {
   try {
 
     res.sendStatus(204).send('Created')
   }
   catch (err) {
-    next(err)
+    console.log('err in helpful answer', err.message)
   }
 })
 
 // report a question
-app.put('qa/questions/:question_id/report', async (req, res) => {
+app.put('/qa/questions/:question_id/report', async (req, res) => {
   try {
 
     res.sendStatus(204).send('Created')
   }
   catch (err) {
-    next(err)
+    console.log('err in reported question', err.message)
   }
 })
 
 // report an answer
-app.put('qa/questions/:answer_id/report', async (req, res) => {
+app.put('/qa/questions/:answer_id/report', async (req, res) => {
   try {
 
     res.sendStatus(204).send('Created')
   }
   catch (err) {
-    next(err)
+    console.log('err in reported answer', err.message)
   }
 })
 
