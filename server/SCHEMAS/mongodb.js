@@ -197,6 +197,7 @@ let helpfulQuestion = async (question_id) => {
 // increment a helpful answer
 let helpfulAnswer = async (answer_id) => {
   try {
+    // query the db for the question and needed info
     let question = await QandA.findOne({
       'answers': {
         $elemMatch: {
@@ -204,6 +205,17 @@ let helpfulAnswer = async (answer_id) => {
         }
       }
     })
+    let id = question._id
+    let answers = question.answers
+
+    answers.forEach((answer, index) => {
+      if (parseInt(answer_id) === answer.answer_id) {
+        console.log('before', answer.answer_helpfulness)
+        answer.answer_helpfulness++
+      }
+    })
+
+    await QandA.findByIdAndUpdate(id, { answers })
   }
   catch (err) {
     console.log('err in helpful answer', err.message)

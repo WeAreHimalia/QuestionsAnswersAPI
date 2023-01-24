@@ -158,8 +158,10 @@ app.put('/qa/questions/:question_id/helpful', async (req, res) => {
 })
 
 // update helpfulness of answer
-app.put('/qa/questions/:answer_id/helpful', async (req, res) => {
+app.put('/qa/answers/:answer_id/helpful', async (req, res) => {
   try {
+    let answer_id = req.params.answer_id
+    await db.helpfulAnswer(answer_id)
 
     res.send('Created')
   }
@@ -182,7 +184,7 @@ app.put('/qa/questions/:question_id/report', async (req, res) => {
 })
 
 // report an answer
-app.put('/qa/questions/:answer_id/report', async (req, res) => {
+app.put('/qa/answers/:answer_id/report', async (req, res) => {
   try {
 
     res.sendStatus(204).send('Created')
