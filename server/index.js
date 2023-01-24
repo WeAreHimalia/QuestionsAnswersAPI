@@ -186,8 +186,10 @@ app.put('/qa/questions/:question_id/report', async (req, res) => {
 // report an answer
 app.put('/qa/answers/:answer_id/report', async (req, res) => {
   try {
+    let answer_id = req.params.answer_id
+    await db.reportedAnswer(answer_id)
 
-    res.sendStatus(204).send('Created')
+    res.send('Created')
   }
   catch (err) {
     console.log('err in reported answer', err.message)
