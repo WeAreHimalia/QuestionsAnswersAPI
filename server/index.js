@@ -1,9 +1,9 @@
 const express = require('express')
 const db = require('./SCHEMAS/mongodb.js')
-let bodyParser = require('body-parser')
-const port = 3050
+const port = 3000
 
 const app = express()
+app.use(express.json())
 
 // get questions
 app.get('/qa/questions', async (req, res) => {
@@ -44,7 +44,7 @@ app.get('/qa/questions', async (req, res) => {
     res.send(final)
   }
   catch (err) {
-    console.log('err in get questions', err.message)
+    res.status(500).end(err.message)
   }
 })
 
@@ -83,7 +83,7 @@ app.get('/qa/questions/:question_id/answers', async (req, res) => {
     res.send(final)
   }
   catch (err) {
-    console.log('err in get answers', err.message)
+    res.status(500).end(err.message)
   }
 })
 
@@ -94,10 +94,10 @@ app.post('/qa/questions', async (req, res) => {
     let name = req.body.name
     let email = req.body.email
     let product_id = req.body.product_id
-    let count = await db.count()
+    let counts = await db.countQuery()
 
     let data = {
-      question_id: count,
+      question_id: counts.questions + 1,
       product_id,
       question_body: body,
       question_date: new Date(),
@@ -108,39 +108,46 @@ app.post('/qa/questions', async (req, res) => {
       answers: []
     }
 
+    // insert the question and update the count schema
     await db.insert(data)
+    await db.incrementCount('questions', counts.questions + 1)
 
-    res.sendStatus(204).send('Created')
+    res.send('Created')
   }
   catch (err) {
-    console.log('err in posting a question', err.message)
+    res.status(500).end(err.message)
   }
 })
 
 // add a new answer
-app.post('/qa/questions/:question_id/answers', (req, res) => {
+app.post('/qa/questions/:question_id/answers', async (req, res) => {
   try {
     let question_id = req.params.question_id
     let body = req.body.body
     let name = req.body.name
     let email = req.body.email
     let photos = req.body.photos
+    let counts = await db.countQuery()
 
     let data = {
-      answer_id: 'need count',
-      answer_body: body,
-      answer_date: new Date(),
+      id: counts.answers + 1,
+      body: body,
+      date_written: new Date(),
       answerer_name: name,
       answerer_email: email,
-      answer_reported: false,
-      answer_helpfulness: 0,
+      reported: false,
+      helpful: 0,
       answer_photos: photos
     }
 
-    res.sendStatus(204).send('Created')
+    // insert answer and increment the counter schema
+    await db.answerInsert(question_id, data)
+    await db.incrementCount('answers', counts.answers + 1)
+
+    res.send('Created')
   }
   catch (err) {
-    console.log('err in posting an answer', err.message)
+    res.status(500).end(err.message)
   }
 })
 
@@ -150,10 +157,10 @@ app.put('/qa/questions/:question_id/helpful', async (req, res) => {
     let question_id = req.params.question_id
     await db.helpfulQuestion(question_id)
 
-    res.send('Created')
+    res.status(204)
   }
   catch (err) {
-    console.log('err in helpful question', err.message)
+    res.status(500).end(err.message)
   }
 })
 
@@ -163,10 +170,10 @@ app.put('/qa/answers/:answer_id/helpful', async (req, res) => {
     let answer_id = req.params.answer_id
     await db.helpfulAnswer(answer_id)
 
-    res.send('Created')
+    res.status(204)
   }
   catch (err) {
-    console.log('err in helpful answer', err.message)
+    res.status(500).end(err.message)
   }
 })
 
@@ -176,10 +183,10 @@ app.put('/qa/questions/:question_id/report', async (req, res) => {
     let question_id = req.params.question_id
     await db.reportedQuestion(question_id)
 
-    res.send('Created')
+    res.status(204)
   }
   catch (err) {
-    console.log('err in reported question', err.message)
+    res.status(500).end(err.message)
   }
 })
 
@@ -189,10 +196,10 @@ app.put('/qa/answers/:answer_id/report', async (req, res) => {
     let answer_id = req.params.answer_id
     await db.reportedAnswer(answer_id)
 
-    res.send('Created')
+    res.status(204)
   }
   catch (err) {
-    console.log('err in reported answer', err.message)
+    res.status(500).end(err.message)
   }
 })
 

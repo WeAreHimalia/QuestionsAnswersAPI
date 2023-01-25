@@ -10,6 +10,11 @@ db.on("error", console.error.bind(console, "MongoDB connection error:"))
 // Define schemas
 const Schema = mongoose.Schema
 
+const CountSchema = new Schema({
+  questions: Number,
+  answers: Number
+})
+
 const AnswerSchema = new Schema({
   answer_id: {
     type: Number,
@@ -38,8 +43,14 @@ const QandASchema = new Schema({
   asker_email: String,
   question_reported: Boolean,
   question_helpfulness: Number,
+  largest_answer_id: Number,
   answers: [AnswerSchema]
 })
+
+// Compile model from schema
+const QandA = mongoose.model("QandAs", QandASchema)
+const Answer = mongoose.model("Answers", AnswerSchema)
+const Count = mongoose.model("Counts", CountSchema)
 
 // get all questions
 let questions = async (product_id, count) => {
@@ -47,7 +58,7 @@ let questions = async (product_id, count) => {
     return await QandA.find({ product_id, question_reported: false }).limit(count).lean()
   }
   catch (err) {
-    console.log('err in get questions', err.message)
+    return err
   }
 }
 
@@ -57,27 +68,92 @@ let answers = async (question_id) => {
     return await QandA.findOne({ question_id }).lean()
   }
   catch (err) {
-    console.log('err in get answers', err.message)
+    return err
   }
 }
 
 // identify the next question id
 let count = async () => {
   try {
-    return await QandA.count()
+    return await QandA.count().lean()
   }
   catch (err) {
-    console.log('err in count', err.message)
+    return err
+  }
+}
+
+let countAnswers = async () => {
+  try {
+    let count = await QandA.aggregate([
+      { $unwind: { path: "$answers" } },
+      { $group: { _id: null, answers: { $count: {} }}},
+      { $project: { _id: 0, answers: 1 }}
+    ])
+    return count[0].answers
+  }
+  catch (err) {
+    return err
+  }
+}
+
+let countQuery = async () => {
+  try {
+    return await Count.findOne()
+  }
+  catch (err) {
+    return err
+  }
+}
+
+let updateCounts = async () => {
+  try {
+    console.log('starting')
+    let questions = await count()
+    let answers = await countAnswers()
+    let data = { questions, answers }
+
+    let checkCounts = await Count.findOne()
+
+    if (checkCounts === null) {
+      await Count.create(data).lean()
+    } else {
+      let id = checkCounts._id
+      await Count.findByIdAndUpdate(id, { questions: data.questions }).lean()
+      await Count.findByIdAndUpdate(id, { answers: data.answers }).lean()
+    }
+  }
+  catch (err) {
+    return err
+  }
+}
+
+let incrementCount = async (countName, num) => {
+  try {
+    let count = await Count.findOne()
+
+    if (count === null) {
+      await updateCounts()
+      count = await Count.findOne()
+    }
+
+    let id = count._id
+    let update = {}
+    update[countName] = num
+
+    await Count.findByIdAndUpdate(id, update).lean()
+  }
+  catch (err) {
+    return err
   }
 }
 
 // insert a new document as a question
 let insert = async (data) => {
   try {
-    await QandA.create(data)
+    await QandA.create(data).lean()
   }
   catch (err) {
-    console.log('err in insert', err.message)
+    return err
   }
 }
 
@@ -86,7 +162,7 @@ let answerInsert = async (question_id, data) => {
   try {
     // query the db for the question and needed info
     let query = { question_id }
-    let question = await QandA.find(query)
+    let question = await QandA.find(query).lean()
     let id = question[0]._id
     let answers = question[0].answers
 
@@ -99,7 +175,7 @@ let answerInsert = async (question_id, data) => {
       answerer_email: data.answerer_email,
       answer_reported: data.reported,
       answer_helpfulness: data.helpful,
-      answer_photos: []
+      answer_photos: data.photos || []
     })
 
     // if not present, insert the answer to the array from the question
@@ -115,11 +191,11 @@ let answerInsert = async (question_id, data) => {
     if (!isPresent) {
       answers.push(answer)
       // add the answer to the asnwers array for this question
-      await QandA.findByIdAndUpdate(id, { answers })
+      await QandA.findByIdAndUpdate(id, { answers }).lean()
     }
   }
   catch (err) {
-    console.log('err in answer insert', err.message)
+    return err
   }
 }
 
@@ -135,7 +211,7 @@ let answerPhotoInsert = async (data) => {
           'answer_id': data.answer_id
         }
       }
-    })
+    }).lean()
 
     let id = question._id
     let answers = question.answers
@@ -170,11 +246,11 @@ let answerPhotoInsert = async (data) => {
       // update the answers for the question
       question.answers = answers
 
-      await QandA.findByIdAndUpdate(id, question)
+      await QandA.findByIdAndUpdate(id, question).lean()
     }
   }
   catch (err) {
-    console.log('err in answer photos insert', err.message)
+    return err
   }
 }
 
@@ -183,14 +259,14 @@ let helpfulQuestion = async (question_id) => {
   try {
     // query the db for the question and needed info
     let query = { question_id }
-    let question = await QandA.findOne(query)
+    let question = await QandA.findOne(query).lean()
     let id = question._id
     let question_helpfulness = question.question_helpfulness + 1
 
-    await QandA.findByIdAndUpdate(id, { question_helpfulness })
+    await QandA.findByIdAndUpdate(id, { question_helpfulness }).lean()
   }
   catch (err) {
-    console.log('err in helpful question', err.message)
+    return err
   }
 }
 
@@ -199,12 +275,8 @@ let helpfulAnswer = async (answer_id) => {
   try {
     // query the db for the question and needed info
     let question = await QandA.findOne({
-      'answers': {
-        $elemMatch: {
-          'answer_id': answer_id
-        }
-      }
-    })
+      'answers': { $elemMatch: { 'answer_id': answer_id } }
+    }).lean()
     let id = question._id
     let answers = question.answers
 
@@ -215,10 +287,10 @@ let helpfulAnswer = async (answer_id) => {
       }
     })
 
-    await QandA.findByIdAndUpdate(id, { answers })
+    await QandA.findByIdAndUpdate(id, { answers }).lean()
   }
   catch (err) {
-    console.log('err in helpful answer', err.message)
+    return err
   }
 }
 
@@ -227,14 +299,14 @@ let reportedQuestion = async (question_id) => {
   try {
         // query the db for the question and needed info
         let query = { question_id }
-        let question = await QandA.findOne(query)
+        let question = await QandA.findOne(query).lean()
         let id = question._id
         let question_reported = true /* !question.question_reported */
 
-        await QandA.findByIdAndUpdate(id, { question_reported })
+        await QandA.findByIdAndUpdate(id, { question_reported }).lean()
   }
   catch (err) {
-    console.log('err in report a question', err.message)
+    return err
   }
 }
 
@@ -248,33 +320,34 @@ let reportedAnswer = async (answer_id) => {
           'answer_id': answer_id
         }
       }
-    })
+    }).lean()
     let id = question._id
     let answers = question.answers
 
     answers.forEach((answer, index) => {
       if (parseInt(answer_id) === answer.answer_id) {
-        console.log('before', answer.answer_reported)
         answer.answer_reported = true /* !question.question_reported */
       }
     })
 
-    await QandA.findByIdAndUpdate(id, { answers })
+    await QandA.findByIdAndUpdate(id, { answers }).lean()
   }
   catch (err) {
-    console.log('err in report an answer', err.message)
+    return err
   }
 }
 
-// Compile model from schema
-const QandA = mongoose.model("QandAs", QandASchema)
-const Answer = mongoose.model("Answers", AnswerSchema)
 
 
 module.exports = {
   QandA,
   Answer,
+  Count,
   count,
+  countAnswers,
+  countQuery,
+  updateCounts,
+  incrementCount,
   questions,
   answers,
   insert,
