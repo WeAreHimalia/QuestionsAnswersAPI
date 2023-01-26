@@ -40,9 +40,7 @@ let readWriteQuestions = async () => {
         })
       })
   }
-  catch (err) {
-    console.log('err in data-import questions', err)
-  }
+  catch (err) { return err.message }
 }
 
 // next add the answer data
@@ -64,14 +62,12 @@ let readWriteAnswers = async () => {
         })
       })
   }
-  catch (err) {
-    console.log('err in data-import answers', err)
-  }
+  catch (err) { return err.message }
 }
 
 // finally, add the photo urls for the answers
 let readWriteAnswerPhotos = async () => {
-  console.log('start questions import')
+  console.log('start answer photos import')
   let count = -1
   try {
     await csv().fromFile(answerPhotoData)
@@ -87,21 +83,18 @@ let readWriteAnswerPhotos = async () => {
         })
       })
   }
-  catch (err) {
-    console.log('err in data-import answer photos', err)
-  }
+  catch (err) { return err.message }
 }
 
 
 // initial load of data
-let initialLoad = async () => { await readWriteQuestions() }
-let secondLoad = async () => { await readWriteAnswers() }
-let thirdLoad = async () => { await readWriteAnswerPhotos() }
-
 let loadAllThree = async () => {
-  await initialLoad()
-  await secondLoad()
-  await thirdLoad()
+  await readWriteQuestions()
+  await readWriteAnswers()
+  await readWriteAnswerPhotos()
+
+  console.log('start update counts')
+  await db.updateCounts()
 }
 
 loadAllThree()

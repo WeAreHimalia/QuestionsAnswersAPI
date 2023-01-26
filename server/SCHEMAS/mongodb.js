@@ -57,31 +57,22 @@ let questions = async (product_id, count) => {
   try {
     return await QandA.find({ product_id, question_reported: false }).limit(count).lean()
   }
-  catch (err) {
-    return err
-  }
+  catch (err) { return err }
 }
 
-// get all answers for a specific question
+// get all answers for a question
 let answers = async (question_id) => {
-  try {
-    return await QandA.findOne({ question_id }).lean()
-  }
-  catch (err) {
-    return err
-  }
+  try { return await QandA.findOne({ question_id }).lean() }
+  catch (err) { return err }
 }
 
 // identify the next question id
 let count = async () => {
-  try {
-    return await QandA.count().lean()
-  }
-  catch (err) {
-    return err
-  }
+  try { return await QandA.count().lean() }
+  catch (err) { return err }
 }
 
+// identify the next answer id
 let countAnswers = async () => {
   try {
     let count = await QandA.aggregate([
@@ -91,27 +82,21 @@ let countAnswers = async () => {
     ])
     return count[0].answers
   }
-  catch (err) {
-    return err
-  }
+  catch (err) { return err }
 }
 
+// return the id counts from the database
 let countQuery = async () => {
-  try {
-    return await Count.findOne()
-  }
-  catch (err) {
-    return err
-  }
+  try { return await Count.findOne() }
+  catch (err) { return err }
 }
 
+// udpdate the counts database
 let updateCounts = async () => {
   try {
-    console.log('starting')
     let questions = await count()
     let answers = await countAnswers()
     let data = { questions, answers }
-
     let checkCounts = await Count.findOne()
 
     if (checkCounts === null) {
@@ -122,11 +107,10 @@ let updateCounts = async () => {
       await Count.findByIdAndUpdate(id, { answers: data.answers }).lean()
     }
   }
-  catch (err) {
-    return err
-  }
+  catch (err) { return err }
 }
 
+// increment the id counts for the database
 let incrementCount = async (countName, num) => {
   try {
     let count = await Count.findOne()
@@ -142,31 +126,23 @@ let incrementCount = async (countName, num) => {
 
     await Count.findByIdAndUpdate(id, update).lean()
   }
-  catch (err) {
-    return err
-  }
+  catch (err) { return err }
 }
 
 // insert a new document as a question
 let insert = async (data) => {
-  try {
-    await QandA.create(data).lean()
-  }
-  catch (err) {
-    return err
-  }
+  try { await QandA.create(data).lean() }
+  catch (err) { return err }
 }
 
 // insert an answer into the provided question document
 let answerInsert = async (question_id, data) => {
   try {
-    // query the db for the question and needed info
     let query = { question_id }
     let question = await QandA.find(query).lean()
     let id = question[0]._id
     let answers = question[0].answers
 
-    // setup the new answer data
     let answer = new Answer({
       answer_id: data.id,
       answer_body: data.body,
@@ -178,7 +154,6 @@ let answerInsert = async (question_id, data) => {
       answer_photos: data.photos || []
     })
 
-    // if not present, insert the answer to the array from the question
     let isPresent = false
     answers.forEach(answer => {
       if (!isPresent) {
@@ -190,21 +165,17 @@ let answerInsert = async (question_id, data) => {
 
     if (!isPresent) {
       answers.push(answer)
-      // add the answer to the asnwers array for this question
+
       await QandA.findByIdAndUpdate(id, { answers }).lean()
     }
   }
-  catch (err) {
-    return err
-  }
+  catch (err) { return err }
 }
 
 // add an image to a given answer
 let answerPhotoInsert = async (data) => {
   try {
     let url = data.url
-
-    // query the db for the answer and needed info
     let question = await QandA.findOne({
       'answers': {
         $elemMatch: {
@@ -225,7 +196,6 @@ let answerPhotoInsert = async (data) => {
       }
     })
 
-    // if not present, insert the answer to the array from the question
     let isPresent = false
     photosArr.forEach(photoUrl => {
       if (!isPresent) {
@@ -236,28 +206,20 @@ let answerPhotoInsert = async (data) => {
     })
 
     if (!isPresent) {
-      // add the image url to the answer photos array
       photosArr.push(url)
       newAnswer.answer_photos = photosArr
-
-      // add the updated answer to the answers array
       answers.push(newAnswer)
-
-      // update the answers for the question
       question.answers = answers
 
       await QandA.findByIdAndUpdate(id, question).lean()
     }
   }
-  catch (err) {
-    return err
-  }
+  catch (err) { return err }
 }
 
 // increment a helpful question
 let helpfulQuestion = async (question_id) => {
   try {
-    // query the db for the question and needed info
     let query = { question_id }
     let question = await QandA.findOne(query).lean()
     let id = question._id
@@ -265,9 +227,7 @@ let helpfulQuestion = async (question_id) => {
 
     await QandA.findByIdAndUpdate(id, { question_helpfulness }).lean()
   }
-  catch (err) {
-    return err
-  }
+  catch (err) { return err }
 }
 
 // increment a helpful answer
@@ -289,9 +249,7 @@ let helpfulAnswer = async (answer_id) => {
 
     await QandA.findByIdAndUpdate(id, { answers }).lean()
   }
-  catch (err) {
-    return err
-  }
+  catch (err) { return err }
 }
 
 // report a question
@@ -305,9 +263,7 @@ let reportedQuestion = async (question_id) => {
 
         await QandA.findByIdAndUpdate(id, { question_reported }).lean()
   }
-  catch (err) {
-    return err
-  }
+  catch (err) { return err }
 }
 
 // report an answer
@@ -332,12 +288,8 @@ let reportedAnswer = async (answer_id) => {
 
     await QandA.findByIdAndUpdate(id, { answers }).lean()
   }
-  catch (err) {
-    return err
-  }
+  catch (err) { return err }
 }
-
-
 
 module.exports = {
   QandA,
