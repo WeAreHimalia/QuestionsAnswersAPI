@@ -41,11 +41,9 @@ app.get('/qa/questions', async (req, res) => {
       })
       final.results.push(formatted)
     })
-    res.send(final)
+    res.status(200).send(final)
   }
-  catch (err) {
-    res.status(500).end(err.message)
-  }
+  catch (err) { res.status(500).end(err.message) }
 })
 
 // get answers
@@ -204,6 +202,8 @@ app.put('/qa/answers/:answer_id/report', async (req, res) => {
 })
 
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`QuestionsAnswersAPI listening on ${port}`)
 })
+
+module.exports = { server }

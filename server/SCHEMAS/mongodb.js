@@ -225,7 +225,7 @@ let helpfulQuestion = async (question_id) => {
     let id = question._id
     let question_helpfulness = question.question_helpfulness + 1
 
-    await QandA.findByIdAndUpdate(id, { question_helpfulness }).lean()
+    await QandA.findByIdAndUpdate(id, { question_helpfulness })
   }
   catch (err) { return err }
 }
