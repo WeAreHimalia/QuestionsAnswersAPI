@@ -33,7 +33,7 @@ describe('GET Questions for a single product', () => {
     expect(body.results[0]).toHaveProperty('answers')
   })
 
-  it('should contain the proper data', async () =>{
+  it('should contain the proper data', async () => {
     const get = await request(server).get('/qa/questions?product_id=4')
     let body = get.body
 
@@ -83,7 +83,7 @@ describe('GET Answers for a single question', () => {
     expect(results[0]).toHaveProperty('photos')
   })
 
-  it('should contain the proper data', async () =>{
+  it('should contain the proper data', async () => {
     const get = await request(server).get('/qa/questions/44/answers')
     let body = get.body
 
@@ -167,54 +167,7 @@ describe('POST a Question for a single product', () => {
 })
 
 describe('POST an Answer for a single Question', () => {
-  // it('should return the correct statusCode for a valid request', async () => {
-  //   const get = await request(server).get('/qa/questions?product_id=1')
-  //   expect(get.statusCode).toBe(200)
-  // })
 
-  // it('should have the correct format', async () => {
-  //   const get = await request(server).get('/qa/questions?product_id=1')
-  //   let body = get.body
-
-  //   expect(body.results[0]).toHaveProperty('question_id')
-  //   expect(body.results[0]).toHaveProperty('question_body')
-  //   expect(body.results[0]).toHaveProperty('question_date')
-  //   expect(body.results[0]).toHaveProperty('asker_name')
-  //   expect(body.results[0]).toHaveProperty('question_helpfulness')
-  //   expect(body.results[0]).toHaveProperty('reported')
-  //   expect(body.results[0]).toHaveProperty('answers')
-  // })
-
-  // it('should contain the proper data', async () =>{
-  //   const get = await request(server).get('/qa/questions?product_id=4')
-  //   let body = get.body
-
-  //   expect(body.product_id).toEqual('4')
-  //   expect(body.results.length > 0).toBe(true)
-
-  //   let included = false, sample = 32
-  //   body.results.forEach(question => {
-  //     if (question.question_id === sample) {
-  //       included = true
-  //     }
-  //   })
-
-  //   expect(included).toBe(true)
-  // })
-
-  // it('should return the correct statusCode and error for a non-existing product', async () => {
-  //   const get = await request(server).get('/qa/questions?product_id=0')
-  //   expect(get.statusCode).toBe(500)
-  //   expect(get.text).toBe('No matching product')
-  // })
-
-  // it('should return the correct statusCode and error message for an incorrect string input', async () => {
-  //   const stringId = 'abc'
-  //   const err = `CastError: Cast to Number failed for value "${stringId}" (type string) at path "product_id" for model "QandAs"`
-  //   const get = await request(server).get(`/qa/questions?product_id=${stringId}`)
-  //   expect(get.statusCode).toBe(500)
-  //   expect(get.text).toBe(err)
-  // })
 })
 
 /********** PUT REQUESTS **********/
@@ -227,15 +180,14 @@ describe('PUT Identify a helpful Question', () => {
 
   it('should update the question helpfulness score', async () => {
     const getBefore = await request(server).get('/qa/questions?product_id=1')
+    let thisQuestion = getBefore.body.results[0].question_id
     let helpfulBefore = getBefore.body.results[0].question_helpfulness
 
-    const put = await request(server).put('/qa/questions/4/helpful')
+    const put = await request(server).put(`/qa/questions/${thisQuestion}/helpful`)
     const getAfter = await request(server).get('/qa/questions?product_id=1')
     let helpfulAfter = getAfter.body.results[0].question_helpfulness
 
-    console.log(helpfulBefore, helpfulAfter)
-
-    // expect(helpfulAfter).toEqual(helpfulBefore + 1)
+    expect(helpfulAfter).toBe(helpfulBefore + 1)
   })
 
   it('should return the correct statusCode and error for a non-existing product', async () => {
@@ -263,8 +215,6 @@ describe('PUT Identify a helpful Answer', () => {
     const getAfter = await request(server).get('/qa/questions/4/answers')
     let helpfulAfter = getAfter.body.results[0].helpfulness
 
-    console.log(helpfulBefore, helpfulAfter)
-
     expect(helpfulAfter).toEqual(helpfulBefore + 1)
   })
 
@@ -287,14 +237,16 @@ describe('PUT Report a Question', () => {
 
   it('should update the question reported to true', async () => {
     const getBefore = await request(server).get('/qa/questions?product_id=1')
-    let helpfulBefore = getBefore.body.results[0].reported
+    let id = getBefore.body.results[0].question_id
 
-    const put = await request(server).put('/qa/questions/4/report')
+    await request(server).put(`/qa/questions/${id}/report`)
     const getAfter = await request(server).get('/qa/questions?product_id=1')
-    let helpfulAfter = getAfter.body.results[0].reported
+    let after = getAfter.body.results[0].question_id
+    await request(server).put(`/qa/questions/${id}/report`)
 
-    console.log(helpfulBefore, helpfulAfter)
-    // expect(helpfulAfter).toBe(!helpfulBefore)
+    const getFinal = await request(server).get('/qa/questions?product_id=1')
+
+    expect(id === after).toBe(false)
   })
 
   it('should return the correct statusCode and error for a non-existing product', async () => {
@@ -316,5 +268,29 @@ describe('PUT Report an Answer', () => {
     expect(put.statusCode).toBe(204)
   })
 
+  it('should update the answer reported to true', async () => {
+    const getBefore = await request(server).get('/qa/questions/5/answers')
+    let id = getBefore.body.results[0].answer_id
 
+    await request(server).put(`/qa/answers/${id}/report`)
+    const getAfter = await request(server).get('/qa/questions/5/answers')
+    let after = getAfter.body.results[0].answer_id
+    await request(server).put(`/qa/answers/${id}/report`)
+
+    const getFinal = await request(server).get('/qa/questions/5/answers')
+
+    expect(id === after).toBe(false)
+  })
+
+  it('should return the correct statusCode and error for a non-existing question', async () => {
+    const put = await request(server).put('/qa/answers/0/report')
+    expect(put.statusCode).toBe(500)
+    expect(put.text).toBe('Invalid answer id provided')
+  })
+
+  it('should return the correct statusCode and error message for a string input', async () => {
+    const put = await request(server).put(`/qa/answers/abc/report`)
+    expect(put.statusCode).toBe(500)
+    expect(put.text).toBe('Invalid answer id provided')
+  })
 })

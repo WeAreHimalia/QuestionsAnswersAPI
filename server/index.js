@@ -160,13 +160,8 @@ app.post('/qa/questions/:question_id/answers', async (req, res) => {
 // update helpfulness of question
 app.put('/qa/questions/:question_id/helpful', async (req, res) => {
   try {
-    let question_id = parseInt(req.params.question_id)
-
-    if (question_id <= 0 || isNaN(question_id)) {
-      throw new Error('Invalid question id provided')
-    }
-
-    await db.helpfulQuestion(question_id.toString())
+    let question_id = req.params.question_id
+    await db.helpfulQuestion(question_id)
     res.status(204).send()
   }
   catch (err) { res.status(500).end(err.message) }
@@ -201,8 +196,12 @@ app.put('/qa/questions/:question_id/report', async (req, res) => {
 // report an answer
 app.put('/qa/answers/:answer_id/report', async (req, res) => {
   try {
-    let answer_id = req.params.answer_id
-    await db.reportedAnswer(answer_id)
+    let answer_id = parseInt(req.params.answer_id)
+
+    if (answer_id <= 0 || isNaN(answer_id)) {
+      throw new Error('Invalid answer id provided')
+    }
+    await db.reportedAnswer(answer_id.toString())
 
     res.status(204).send()
   }

@@ -259,6 +259,7 @@ let reportedQuestion = async (question_id) => {
         let question = await QandA.findOne(query).lean()
         let id = question._id
         let question_reported = !question.question_reported
+        // console.log('inner test', question.question_reported, question_reported)
 
         await QandA.findByIdAndUpdate(id, { question_reported }).lean()
   }
@@ -281,7 +282,7 @@ let reportedAnswer = async (answer_id) => {
 
     answers.forEach((answer, index) => {
       if (parseInt(answer_id) === answer.answer_id) {
-        answer.answer_reported = true /* !question.question_reported */
+        answer.answer_reported = !answer.answer_reported
       }
     })
 
