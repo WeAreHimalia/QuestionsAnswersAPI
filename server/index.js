@@ -13,6 +13,12 @@ app.get('/qa/questions', async (req, res) => {
     let count = req.query.count || 5
     let questions = await db.questions(product_id, count)
 
+    if (questions.length === 0) {
+      throw new Error('No matching product')
+    } else if (!Array.isArray(questions)) {
+      throw new Error(questions)
+    }
+
     let final = {
       product_id,
       results: []
@@ -49,9 +55,13 @@ app.get('/qa/questions', async (req, res) => {
 // get answers
 app.get('/qa/questions/:question_id/answers', async (req, res) => {
   try {
-    let question_id = req.params.question_id
+    let question_id = parseInt(req.params.question_id)
     let page = req.query.page || 1
     let count = req.query.page || 5
+
+    if (question_id <= 0 || isNaN(question_id)) {
+      throw new Error('Invalid question id provided')
+    }
 
     let result = await db.answers(question_id)
 
@@ -68,7 +78,7 @@ app.get('/qa/questions/:question_id/answers', async (req, res) => {
           answer_id: answer.answer_id,
           body: answer.answer_body,
           date: answer.answer_date,
-          aswerer_name: answer.answerer_name,
+          answerer_name: answer.answerer_name,
           helpfulness: answer.answer_helpfulness,
           photos: answer.answer_photos
         }
