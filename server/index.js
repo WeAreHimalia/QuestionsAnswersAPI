@@ -90,9 +90,7 @@ app.get('/qa/questions/:question_id/answers', async (req, res) => {
 
     res.send(final)
   }
-  catch (err) {
-    res.status(500).end(err.message)
-  }
+  catch (err) { res.status(500).end(err.message) }
 })
 
 // add a new question
@@ -162,14 +160,16 @@ app.post('/qa/questions/:question_id/answers', async (req, res) => {
 // update helpfulness of question
 app.put('/qa/questions/:question_id/helpful', async (req, res) => {
   try {
-    let question_id = req.params.question_id
-    await db.helpfulQuestion(question_id)
+    let question_id = parseInt(req.params.question_id)
 
-    res.status(204)
+    if (question_id <= 0 || isNaN(question_id)) {
+      throw new Error('Invalid question id provided')
+    }
+
+    await db.helpfulQuestion(question_id.toString())
+    res.status(204).send()
   }
-  catch (err) {
-    res.status(500).end(err.message)
-  }
+  catch (err) { res.status(500).end(err.message) }
 })
 
 // update helpfulness of answer
@@ -178,24 +178,24 @@ app.put('/qa/answers/:answer_id/helpful', async (req, res) => {
     let answer_id = req.params.answer_id
     await db.helpfulAnswer(answer_id)
 
-    res.status(204)
+    res.status(204).send()
   }
-  catch (err) {
-    res.status(500).end(err.message)
-  }
+  catch (err) { res.status(500).end(err.message) }
 })
 
 // report a question
 app.put('/qa/questions/:question_id/report', async (req, res) => {
   try {
-    let question_id = req.params.question_id
-    await db.reportedQuestion(question_id)
+    let question_id = parseInt(req.params.question_id)
 
-    res.status(204)
+    if (question_id <= 0 || isNaN(question_id)) {
+      throw new Error('Invalid question id provided')
+    }
+
+    await db.reportedQuestion(question_id.toString())
+    res.status(204).send()
   }
-  catch (err) {
-    res.status(500).end(err.message)
-  }
+  catch (err) { res.status(500).end(err.message) }
 })
 
 // report an answer
@@ -204,11 +204,9 @@ app.put('/qa/answers/:answer_id/report', async (req, res) => {
     let answer_id = req.params.answer_id
     await db.reportedAnswer(answer_id)
 
-    res.status(204)
+    res.status(204).send()
   }
-  catch (err) {
-    res.status(500).end(err.message)
-  }
+  catch (err) { res.status(500).end(err.message) }
 })
 
 
