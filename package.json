@@ -5,6 +5,7 @@
   "main": "server/index.js",
   "scripts": {
     "test": "jest",
+    "test-watch": "jest --watch",
     "server": "nodemon server/index.js"
   },
   "repository": {

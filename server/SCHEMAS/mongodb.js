@@ -10,6 +10,11 @@ db.on("error", console.error.bind(console, "MongoDB connection error:"))
 // Define schemas
 const Schema = mongoose.Schema
 
+const CountSchema = new Schema({
+  questions: Number,
+  answers: Number
+})
+
 const AnswerSchema = new Schema({
   answer_id: {
     type: Number,
@@ -38,104 +43,270 @@ const QandASchema = new Schema({
   asker_email: String,
   question_reported: Boolean,
   question_helpfulness: Number,
+  largest_answer_id: Number,
   answers: [AnswerSchema]
 })
-
-let insert = async (data) => {
-  await QandA.create(data)
-    .then(() => {})
-    .catch((err) => console.log('err in insert', err.message))
-}
-
-let answerInsert = async (question_id, data) => {
-  // query the db for the question and needed info
-  let query = { question_id }
-  let question = await QandA.find(query)
-  let id = question[0]._id
-  let answers = question[0].answers
-
-  // setup the new answer data
-  let answer = new Answer({
-    answer_id: data.id,
-    answer_body: data.body,
-    answer_date: data.date_written,
-    answerer_name: data.answerer_name,
-    answerer_email: data.answerer_email,
-    answer_reported: data.reported,
-    answer_helpfulness: data.helpful,
-    answer_photos: []
-  })
-
-  // if not present, insert the answer to the array from the question
-  let isPresent = false
-  answers.forEach(answer => {
-    if (!isPresent) {
-      if (answer.answer_id === parseInt(data.id)) {
-        isPresent = true
-      }
-    }
-  })
-
-  if (!isPresent) {
-    answers.push(answer)
-    // add the answer to the asnwers array for this question
-    await QandA.findByIdAndUpdate(id, { answers })
-  }
-}
-
-let answerPhotoInsert = async (data) => {
-  let url = data.url
-
-  // query the db for the answer and needed info
-  let question = await QandA.findOne({
-    'answers': {
-      $elemMatch: {
-        'answer_id': data.answer_id
-      }
-    }
-  })
-
-  let id = question._id
-  let answers = question.answers
-  let newAnswer, photosArr
-
-  answers.forEach((answer, index) => {
-    if (parseInt(data.answer_id) === answer.answer_id) {
-      newAnswer = answer
-      photosArr = answer.answer_photos
-      answers.splice(index, 1)
-    }
-  })
-
-  // if not present, insert the answer to the array from the question
-  let isPresent = false
-  photosArr.forEach(photoUrl => {
-    if (!isPresent) {
-      if (photoUrl === url) {
-        isPresent = true
-      }
-    }
-  })
-
-  if (!isPresent) {
-    // add the image url to the answer photos array
-    photosArr.push(url)
-    newAnswer.answer_photos = photosArr
-
-    // add the updated answer to the answers array
-    answers.push(newAnswer)
-
-    // update the answers for the question
-    question.answers = answers
-
-    await QandA.findByIdAndUpdate(id, question)
-  }
-
-}
 
 // Compile model from schema
 const QandA = mongoose.model("QandAs", QandASchema)
 const Answer = mongoose.model("Answers", AnswerSchema)
+const Count = mongoose.model("Counts", CountSchema)
 
+// get all questions
+let questions = async (product_id, count) => {
+  try {
+    return await QandA.find({ product_id, question_reported: false }).limit(count).lean()
+  }
+  catch (err) { return err }
+}
 
-module.exports = { QandA, Answer, insert, answerInsert, answerPhotoInsert }
+// get all answers for a question
+let answers = async (question_id) => {
+  try { return await QandA.findOne({ question_id }).lean() }
+  catch (err) { return err }
+}
+
+// identify the next question id
+let count = async () => {
+  try { return await QandA.count().lean() }
+  catch (err) { return err }
+}
+
+// identify the next answer id
+let countAnswers = async () => {
+  try {
+    let count = await QandA.aggregate([
+      { $unwind: { path: "$answers" } },
+      { $group: { _id: null, answers: { $count: {} }}},
+      { $project: { _id: 0, answers: 1 }}
+    ])
+    return count[0].answers
+  }
+  catch (err) { return err }
+}
+
+// return the id counts from the database
+let countQuery = async () => {
+  try { return await Count.findOne() }
+  catch (err) { return err }
+}
+
+// udpdate the counts database
+let updateCounts = async () => {
+  try {
+    let questions = await count()
+    let answers = await countAnswers()
+    let data = { questions, answers }
+    let checkCounts = await Count.findOne()
+
+    if (checkCounts === null) {
+      await Count.create(data).lean()
+    } else {
+      let id = checkCounts._id
+      await Count.findByIdAndUpdate(id, { questions: data.questions }).lean()
+      await Count.findByIdAndUpdate(id, { answers: data.answers }).lean()
+    }
+  }
+  catch (err) { return err }
+}
+
+// increment the id counts for the database
+let incrementCount = async (countName, num) => {
+  try {
+    let count = await Count.findOne()
+
+    if (count === null) {
+      await updateCounts()
+      count = await Count.findOne()
+    }
+
+    let id = count._id
+    let update = {}
+    update[countName] = num
+
+    await Count.findByIdAndUpdate(id, update).lean()
+  }
+  catch (err) { return err }
+}
+
+// insert a new document as a question
+let insert = async (data) => {
+  try { await QandA.create(data).lean() }
+  catch (err) { return err }
+}
+
+// insert an answer into the provided question document
+let answerInsert = async (question_id, data) => {
+  try {
+    let query = { question_id }
+    let question = await QandA.find(query).lean()
+    let id = question[0]._id
+    let answers = question[0].answers
+
+    let answer = new Answer({
+      answer_id: data.id,
+      answer_body: data.body,
+      answer_date: data.date_written,
+      answerer_name: data.answerer_name,
+      answerer_email: data.answerer_email,
+      answer_reported: data.reported,
+      answer_helpfulness: data.helpful,
+      answer_photos: data.photos || []
+    })
+
+    let isPresent = false
+    answers.forEach(answer => {
+      if (!isPresent) {
+        if (answer.answer_id === parseInt(data.id)) {
+          isPresent = true
+        }
+      }
+    })
+
+    if (!isPresent) {
+      answers.push(answer)
+
+      await QandA.findByIdAndUpdate(id, { answers }).lean()
+    }
+  }
+  catch (err) { return err }
+}
+
+// add an image to a given answer
+let answerPhotoInsert = async (data) => {
+  try {
+    let url = data.url
+    let question = await QandA.findOne({
+      'answers': {
+        $elemMatch: {
+          'answer_id': data.answer_id
+        }
+      }
+    }).lean()
+
+    let id = question._id
+    let answers = question.answers
+    let newAnswer, photosArr
+
+    answers.forEach((answer, index) => {
+      if (parseInt(data.answer_id) === answer.answer_id) {
+        newAnswer = answer
+        photosArr = answer.answer_photos
+        answers.splice(index, 1)
+      }
+    })
+
+    let isPresent = false
+    photosArr.forEach(photoUrl => {
+      if (!isPresent) {
+        if (photoUrl === url) {
+          isPresent = true
+        }
+      }
+    })
+
+    if (!isPresent) {
+      photosArr.push(url)
+      newAnswer.answer_photos = photosArr
+      answers.push(newAnswer)
+      question.answers = answers
+
+      await QandA.findByIdAndUpdate(id, question).lean()
+    }
+  }
+  catch (err) { return err }
+}
+
+// increment a helpful question
+let helpfulQuestion = async (question_id) => {
+  try {
+    let query = { question_id }
+    let question = await QandA.findOne(query).lean()
+    let id = question._id
+    let question_helpfulness = question.question_helpfulness + 1
+
+    await QandA.findByIdAndUpdate(id, { question_helpfulness }).lean()
+  }
+  catch (err) { return err }
+}
+
+// increment a helpful answer
+let helpfulAnswer = async (answer_id) => {
+  try {
+    // query the db for the question and needed info
+    let question = await QandA.findOne({
+      'answers': { $elemMatch: { 'answer_id': answer_id } }
+    }).lean()
+    let id = question._id
+    let answers = question.answers
+
+    answers.forEach((answer, index) => {
+      if (parseInt(answer_id) === answer.answer_id) {
+        console.log('before', answer.answer_helpfulness)
+        answer.answer_helpfulness++
+      }
+    })
+
+    await QandA.findByIdAndUpdate(id, { answers }).lean()
+  }
+  catch (err) { return err }
+}
+
+// report a question
+let reportedQuestion = async (question_id) => {
+  try {
+        // query the db for the question and needed info
+        let query = { question_id }
+        let question = await QandA.findOne(query).lean()
+        let id = question._id
+        let question_reported = true /* !question.question_reported */
+
+        await QandA.findByIdAndUpdate(id, { question_reported }).lean()
+  }
+  catch (err) { return err }
+}
+
+// report an answer
+let reportedAnswer = async (answer_id) => {
+  try {
+    // query the db for the question and needed info
+    let question = await QandA.findOne({
+      'answers': {
+        $elemMatch: {
+          'answer_id': answer_id
+        }
+      }
+    }).lean()
+    let id = question._id
+    let answers = question.answers
+
+    answers.forEach((answer, index) => {
+      if (parseInt(answer_id) === answer.answer_id) {
+        answer.answer_reported = true /* !question.question_reported */
+      }
+    })
+
+    await QandA.findByIdAndUpdate(id, { answers }).lean()
+  }
+  catch (err) { return err }
+}
+
+module.exports = {
+  QandA,
+  Answer,
+  Count,
+  count,
+  countAnswers,
+  countQuery,
+  updateCounts,
+  incrementCount,
+  questions,
+  answers,
+  insert,
+  answerInsert,
+  answerPhotoInsert,
+  helpfulQuestion,
+  helpfulAnswer,
+  reportedQuestion,
+  reportedAnswer
+}
