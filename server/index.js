@@ -93,9 +93,26 @@ app.get('/qa/questions/:question_id/answers', async (req, res) => {
   catch (err) { res.status(500).end(err.message) }
 })
 
+// retrieve current id table
+app.get('/qa/counts', async (req, res) => {
+  try {
+    let counts = await db.countQuery()
+    res.send(counts)
+  }
+  catch (err) { return err.message }
+})
+
 // add a new question
 app.post('/qa/questions', async (req, res) => {
   try {
+    // confirm correct format
+    let keys = Object.keys(req.body)
+    if (keys.length === 0) {
+      throw new Error('Please submit a valid question')
+    } else if (!keys.includes('body') || !keys.includes('name') || !keys.includes('email') || !keys.includes('product_id')) {
+      throw new Error('Invalid Question Post entry')
+    }
+
     let body = req.body.body
     let name = req.body.name
     let email = req.body.email
@@ -117,17 +134,22 @@ app.post('/qa/questions', async (req, res) => {
     // insert the question and update the count schema
     await db.insert(data)
     await db.incrementCount('questions', counts.questions + 1)
-
-    res.send('Created')
+    res.status(201).send('Created')
   }
-  catch (err) {
-    res.status(500).end(err.message)
-  }
+  catch (err) { res.status(500).end(err.message) }
 })
 
 // add a new answer
 app.post('/qa/questions/:question_id/answers', async (req, res) => {
   try {
+    // confirm correct format
+    let keys = Object.keys(req.body)
+    if (keys.length === 0) {
+      throw new Error('Please submit a valid answer')
+    } else if (!keys.includes('body') || !keys.includes('name') || !keys.includes('email') || !keys.includes('photos')) {
+      throw new Error('Invalid Answer Post entry')
+    }
+
     let question_id = req.params.question_id
     let body = req.body.body
     let name = req.body.name
@@ -149,12 +171,9 @@ app.post('/qa/questions/:question_id/answers', async (req, res) => {
     // insert answer and increment the counter schema
     await db.answerInsert(question_id, data)
     await db.incrementCount('answers', counts.answers + 1)
-
-    res.send('Created')
+    res.status(201).send('Created')
   }
-  catch (err) {
-    res.status(500).end(err.message)
-  }
+  catch (err) { res.status(500).end(err.message) }
 })
 
 // update helpfulness of question
@@ -202,7 +221,6 @@ app.put('/qa/answers/:answer_id/report', async (req, res) => {
       throw new Error('Invalid answer id provided')
     }
     await db.reportedAnswer(answer_id.toString())
-
     res.status(204).send()
   }
   catch (err) { res.status(500).end(err.message) }
