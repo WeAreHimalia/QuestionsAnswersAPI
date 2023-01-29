@@ -225,7 +225,7 @@ let helpfulQuestion = async (question_id) => {
     let id = question._id
     let question_helpfulness = question.question_helpfulness + 1
 
-    await QandA.findByIdAndUpdate(id, { question_helpfulness }).lean()
+    await QandA.findByIdAndUpdate(id, { question_helpfulness })
   }
   catch (err) { return err }
 }
@@ -242,7 +242,6 @@ let helpfulAnswer = async (answer_id) => {
 
     answers.forEach((answer, index) => {
       if (parseInt(answer_id) === answer.answer_id) {
-        console.log('before', answer.answer_helpfulness)
         answer.answer_helpfulness++
       }
     })
@@ -259,7 +258,8 @@ let reportedQuestion = async (question_id) => {
         let query = { question_id }
         let question = await QandA.findOne(query).lean()
         let id = question._id
-        let question_reported = true /* !question.question_reported */
+        let question_reported = !question.question_reported
+        // console.log('inner test', question.question_reported, question_reported)
 
         await QandA.findByIdAndUpdate(id, { question_reported }).lean()
   }
@@ -282,7 +282,7 @@ let reportedAnswer = async (answer_id) => {
 
     answers.forEach((answer, index) => {
       if (parseInt(answer_id) === answer.answer_id) {
-        answer.answer_reported = true /* !question.question_reported */
+        answer.answer_reported = !answer.answer_reported
       }
     })
 

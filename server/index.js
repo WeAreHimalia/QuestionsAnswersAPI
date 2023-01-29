@@ -1,6 +1,6 @@
 const express = require('express')
 const db = require('./SCHEMAS/mongodb.js')
-const port = 3000
+const port = 3030
 
 const app = express()
 app.use(express.json())
@@ -12,6 +12,12 @@ app.get('/qa/questions', async (req, res) => {
     let page = req.query.page || 1
     let count = req.query.count || 5
     let questions = await db.questions(product_id, count)
+
+    if (questions.length === 0) {
+      throw new Error('No matching product')
+    } else if (!Array.isArray(questions)) {
+      throw new Error(questions)
+    }
 
     let final = {
       product_id,
@@ -41,19 +47,21 @@ app.get('/qa/questions', async (req, res) => {
       })
       final.results.push(formatted)
     })
-    res.send(final)
+    res.status(200).send(final)
   }
-  catch (err) {
-    res.status(500).end(err.message)
-  }
+  catch (err) { res.status(500).end(err.message) }
 })
 
 // get answers
 app.get('/qa/questions/:question_id/answers', async (req, res) => {
   try {
-    let question_id = req.params.question_id
+    let question_id = parseInt(req.params.question_id)
     let page = req.query.page || 1
     let count = req.query.page || 5
+
+    if (question_id <= 0 || isNaN(question_id)) {
+      throw new Error('Invalid question id provided')
+    }
 
     let result = await db.answers(question_id)
 
@@ -70,7 +78,7 @@ app.get('/qa/questions/:question_id/answers', async (req, res) => {
           answer_id: answer.answer_id,
           body: answer.answer_body,
           date: answer.answer_date,
-          aswerer_name: answer.answerer_name,
+          answerer_name: answer.answerer_name,
           helpfulness: answer.answer_helpfulness,
           photos: answer.answer_photos
         }
@@ -82,14 +90,29 @@ app.get('/qa/questions/:question_id/answers', async (req, res) => {
 
     res.send(final)
   }
-  catch (err) {
-    res.status(500).end(err.message)
+  catch (err) { res.status(500).end(err.message) }
+})
+
+// retrieve current id table
+app.get('/qa/counts', async (req, res) => {
+  try {
+    let counts = await db.countQuery()
+    res.send(counts)
   }
+  catch (err) { return err.message }
 })
 
 // add a new question
 app.post('/qa/questions', async (req, res) => {
   try {
+    // confirm correct format
+    let keys = Object.keys(req.body)
+    if (keys.length === 0) {
+      throw new Error('Please submit a valid question')
+    } else if (!keys.includes('body') || !keys.includes('name') || !keys.includes('email') || !keys.includes('product_id')) {
+      throw new Error('Invalid Question Post entry')
+    }
+
     let body = req.body.body
     let name = req.body.name
     let email = req.body.email
@@ -111,17 +134,22 @@ app.post('/qa/questions', async (req, res) => {
     // insert the question and update the count schema
     await db.insert(data)
     await db.incrementCount('questions', counts.questions + 1)
-
-    res.send('Created')
+    res.status(201).send('Created')
   }
-  catch (err) {
-    res.status(500).end(err.message)
-  }
+  catch (err) { res.status(500).end(err.message) }
 })
 
 // add a new answer
 app.post('/qa/questions/:question_id/answers', async (req, res) => {
   try {
+    // confirm correct format
+    let keys = Object.keys(req.body)
+    if (keys.length === 0) {
+      throw new Error('Please submit a valid answer')
+    } else if (!keys.includes('body') || !keys.includes('name') || !keys.includes('email') || !keys.includes('photos')) {
+      throw new Error('Invalid Answer Post entry')
+    }
+
     let question_id = req.params.question_id
     let body = req.body.body
     let name = req.body.name
@@ -143,12 +171,9 @@ app.post('/qa/questions/:question_id/answers', async (req, res) => {
     // insert answer and increment the counter schema
     await db.answerInsert(question_id, data)
     await db.incrementCount('answers', counts.answers + 1)
-
-    res.send('Created')
+    res.status(201).send('Created')
   }
-  catch (err) {
-    res.status(500).end(err.message)
-  }
+  catch (err) { res.status(500).end(err.message) }
 })
 
 // update helpfulness of question
@@ -156,12 +181,9 @@ app.put('/qa/questions/:question_id/helpful', async (req, res) => {
   try {
     let question_id = req.params.question_id
     await db.helpfulQuestion(question_id)
-
-    res.status(204)
+    res.status(204).send()
   }
-  catch (err) {
-    res.status(500).end(err.message)
-  }
+  catch (err) { res.status(500).end(err.message) }
 })
 
 // update helpfulness of answer
@@ -170,40 +192,43 @@ app.put('/qa/answers/:answer_id/helpful', async (req, res) => {
     let answer_id = req.params.answer_id
     await db.helpfulAnswer(answer_id)
 
-    res.status(204)
+    res.status(204).send()
   }
-  catch (err) {
-    res.status(500).end(err.message)
-  }
+  catch (err) { res.status(500).end(err.message) }
 })
 
 // report a question
 app.put('/qa/questions/:question_id/report', async (req, res) => {
   try {
-    let question_id = req.params.question_id
-    await db.reportedQuestion(question_id)
+    let question_id = parseInt(req.params.question_id)
 
-    res.status(204)
+    if (question_id <= 0 || isNaN(question_id)) {
+      throw new Error('Invalid question id provided')
+    }
+
+    await db.reportedQuestion(question_id.toString())
+    res.status(204).send()
   }
-  catch (err) {
-    res.status(500).end(err.message)
-  }
+  catch (err) { res.status(500).end(err.message) }
 })
 
 // report an answer
 app.put('/qa/answers/:answer_id/report', async (req, res) => {
   try {
-    let answer_id = req.params.answer_id
-    await db.reportedAnswer(answer_id)
+    let answer_id = parseInt(req.params.answer_id)
 
-    res.status(204)
+    if (answer_id <= 0 || isNaN(answer_id)) {
+      throw new Error('Invalid answer id provided')
+    }
+    await db.reportedAnswer(answer_id.toString())
+    res.status(204).send()
   }
-  catch (err) {
-    res.status(500).end(err.message)
-  }
+  catch (err) { res.status(500).end(err.message) }
 })
 
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`QuestionsAnswersAPI listening on ${port}`)
 })
+
+module.exports = { server }
