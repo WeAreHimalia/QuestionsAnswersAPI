@@ -2,7 +2,7 @@ import http from 'k6/http'
 import { sleep } from 'k6'
 
 export const options = {
-  vus: 10,
+  vus: 1,
   duration: '60s',
 }
 
@@ -13,6 +13,7 @@ export default function () {
 
   // PUT requests
   http.get('http://localhost:3030/qa/questions/75/helpful')
+  http.get('http://localhost:3030/qa/answers/148/helpful')
 
   // wait 1 second between requests
   sleep(1)
