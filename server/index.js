@@ -227,8 +227,6 @@ app.put('/qa/answers/:answer_id/report', async (req, res) => {
 })
 
 
-const server = app.listen(port, () => {
-  console.log(`QuestionsAnswersAPI listening on ${port}`)
-})
+const server = app.listen(port, () => { console.log(`QuestionsAnswersAPI listening on ${port}`) })
 
 module.exports = { server }
