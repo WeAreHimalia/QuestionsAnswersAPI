@@ -39,7 +39,7 @@ export default function () {
   }
 
   http.post('http://localhost:3030/qa/questions', questionPost, params)
-  // http.post('http://localhost:3030/qa/questions/41/answers', answerPost, params)
+  http.post('http://localhost:3030/qa/questions/41/answers', answerPost, params)
 
   // wait 1 second between requests
   sleep(1)
