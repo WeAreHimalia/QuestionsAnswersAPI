@@ -4,20 +4,28 @@ import { sleep } from 'k6'
 export const options = {
   vus: 10,
   duration: '60s',
+
+  // stages: [
+  //   { duration: '30s', target: 20 },
+  //   { duration: '1m30s', target: 10 },
+  //   { duration: '20s', target: 0 },
+  // ],
 }
 
 export default function () {
+  const URL = 'http://localhost:3030'
+  let id = 2500000
+
   // GET requests
-  http.get('http://localhost:3030/qa/questions?product_id=10001')
-  http.get('http://localhost:3030/qa/questions/88/answers')
+  http.get(`${URL}/qa/questions?product_id=${id}`)
+  http.get(`${URL}/qa/questions/${id}/answers`)
 
   // PUT requests
-  http.put('http://localhost:3030/qa/questions/75/helpful')
-  http.put('http://localhost:3030/qa/answers/148/helpful')
-  http.put('http://localhost:3030/qa/questions/45/report')
-  http.put('http://localhost:3030/qa/answers/100/report')
+  http.put(`${URL}/qa/questions/${id}/helpful`)
+  http.put(`${URL}/qa/answers/${id}/helpful`)
+  http.put(`${URL}/qa/questions/${id}/report`)
+  http.put(`${URL}/qa/answers/${id}/report`)
 
-  // POST requests
   const questionPost = JSON.stringify({
     product_id: '55',
     body: 'K6 test body',
@@ -38,10 +46,13 @@ export default function () {
     }
   }
 
-  http.post('http://localhost:3030/qa/questions', questionPost, params)
-  http.post('http://localhost:3030/qa/questions/41/answers', answerPost, params)
+  // POST requests
+  http.post(`${URL}/qa/questions`, questionPost, params)
+  http.post(`${URL}/qa/questions/${id}/answers`, answerPost, params)
+
+  // decrement the id
+  id--
 
   // wait 1 second between requests
   sleep(1)
-
 }
