@@ -2,9 +2,9 @@ import http from 'k6/http'
 import { check, sleep } from 'k6'
 
 export const options = {
-  vus: 1,
+  vus: 890,
   duration: '60s',
-  rps: 1,
+  rps: 890,
   thresholds: {
     http_req_failed: ['rate<0.01'], // http errors should be less than 1%
     http_req_duration: ['p(90)<200'], // 90% of requests should be below 200ms
@@ -18,14 +18,14 @@ export default function () {
   let id = idOptions[Math.floor(Math.random() * idOptions.length)]
 
   // GET requests
-  const resQ = http.get(`${URL}/qa/questions?product_id=${id}`)
-  const resA = http.get(`${URL}/qa/questions/${id}/answers`)
+  // const res = http.get(`${URL}/qa/questions?product_id=${id}`)
+  // const res = http.get(`${URL}/qa/questions/${id}/answers`)
 
   // PUT requests
-  const resHQ = http.put(`${URL}/qa/questions/${id}/helpful`)
-  const resHA = http.put(`${URL}/qa/answers/${id}/helpful`)
-  const resRQ = http.put(`${URL}/qa/questions/${id}/report`)
-  const resRA = http.put(`${URL}/qa/answers/${id}/report`)
+  // const res = http.put(`${URL}/qa/questions/${id}/helpful`)
+  // const res = http.put(`${URL}/qa/answers/${id}/helpful`)
+  // const res = http.put(`${URL}/qa/questions/${id}/report`)
+  // const res = http.put(`${URL}/qa/answers/${id}/report`)
 
   const questionPost = JSON.stringify({
     product_id: '55',
@@ -48,18 +48,15 @@ export default function () {
   }
 
   // POST requests
-  const resNewQ = http.post(`${URL}/qa/questions`, questionPost, params)
-  const resNewA = http.post(`${URL}/qa/questions/${id}/answers`, answerPost, params)
+  // const res = http.post(`${URL}/qa/questions`, questionPost, params)
+  const res = http.post(`${URL}/qa/questions/${id}/answers`, answerPost, params)
 
-  // check requests
-  check(resQ, { 'is status 200': (r) => r.status === 200 })
-  // check(resA, { 'is status 200': (r) => r.status === 200 })
-  // check(resHQ, { 'is status 204': (r) => r.status === 204 })
-  // check(resHA, { 'is status 204': (r) => r.status === 204 })
-  // check(resRQ, { 'is status 204': (r) => r.status === 204 })
-  // check(resRA, { 'is status 204': (r) => r.status === 204 })
-  // check(resNewQ, { 'is status 201': (r) => r.status === 201 })
-  // check(resNewA, { 'is status 201': (r) => r.status === 201 })
+  // check GET requests
+  // check(res, { 'is status 200': (r) => r.status === 200 })
+  // check PUT requests
+  // check(res, { 'is status 204': (r) => r.status === 204 })
+  // check POST requests
+  check(res, { 'is status 201': (r) => r.status === 201 })
 
 
   // wait 1 second between requests
