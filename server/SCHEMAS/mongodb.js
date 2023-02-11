@@ -1,7 +1,6 @@
 const mongoose = require("mongoose")
 require('dotenv').config()
 const SECRET = process.env.MONGO_SECRET
-
 const mongoDB = `mongodb://mindi:${SECRET}@localhost/qa`
 
 mongoose.set('strictQuery', true)
