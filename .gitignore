@@ -1,3 +1,5 @@
 node_modules
 coverage
 data/final
+newrelic_agent.log
+.env
