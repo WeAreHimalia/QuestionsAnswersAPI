@@ -1,8 +1,17 @@
 const mongoose = require("mongoose")
-const mongoDB = "mongodb://127.0.0.1/qa"
+require('dotenv').config()
+const SECRET = process.env.MONGO_SECRET
+const mongoDB = `mongodb://ec2-3-216-36-36.compute-1.amazonaws.com:27017/qa`
 
 mongoose.set('strictQuery', true)
-mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(mongoDB, {
+  family: 4,
+  authSource: "qa",
+  user: "mindi",
+  pass: SECRET,
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
 
 const db = mongoose.connection
 db.on("error", console.error.bind(console, "MongoDB connection error:"))
@@ -43,7 +52,6 @@ const QandASchema = new Schema({
   asker_email: String,
   question_reported: Boolean,
   question_helpfulness: Number,
-  largest_answer_id: Number,
   answers: [AnswerSchema]
 })
 
@@ -54,20 +62,18 @@ const Count = mongoose.model("Counts", CountSchema)
 
 // get all questions
 let questions = async (product_id, count) => {
-  try {
-    return await QandA.find({ product_id, question_reported: false }).limit(count).lean()
-  }
+  try { return await QandA.find({ product_id, question_reported: false }).limit(count).select('product_id question_id question_body question_date asker_name question_helpfulness question_reported answers').lean() }
   catch (err) { return err }
 }
 
 // get all answers for a question
-let answers = async (question_id) => {
+let answers = async (question_id, count) => {
   try { return await QandA.findOne({ question_id }).lean() }
   catch (err) { return err }
 }
 
 // identify the next question id
-let count = async () => {
+let countQuestions = async () => {
   try { return await QandA.count().lean() }
   catch (err) { return err }
 }
@@ -77,8 +83,8 @@ let countAnswers = async () => {
   try {
     let count = await QandA.aggregate([
       { $unwind: { path: "$answers" } },
-      { $group: { _id: null, answers: { $count: {} }}},
-      { $project: { _id: 0, answers: 1 }}
+      { $group: { _id: null, answers: { $count: {} } } },
+      { $project: { _id: 0, answers: 1 } }
     ])
     return count[0].answers
   }
@@ -94,7 +100,7 @@ let countQuery = async () => {
 // udpdate the counts database
 let updateCounts = async () => {
   try {
-    let questions = await count()
+    let questions = await countQuestions()
     let answers = await countAnswers()
     let data = { questions, answers }
     let checkCounts = await Count.findOne()
@@ -131,7 +137,16 @@ let incrementCount = async (countName, num) => {
 
 // insert a new document as a question
 let insert = async (data) => {
-  try { await QandA.create(data).lean() }
+  try {
+    let num
+    if (!data.question_id) {
+      let count = await Count.findOne()
+      num = parseInt(count.questions)
+      data.question_id = num + 1
+    }
+    await QandA.create(data)
+    incrementCount('questions', num + 1)
+  }
   catch (err) { return err }
 }
 
@@ -139,12 +154,21 @@ let insert = async (data) => {
 let answerInsert = async (question_id, data) => {
   try {
     let query = { question_id }
-    let question = await QandA.find(query).lean()
-    let id = question[0]._id
-    let answers = question[0].answers
+    let question = await QandA.findOne(query).lean()
+    let id = question._id
+    let answers = question.answers
+    let answer_id
+
+    if (!data.id) {
+      let count = await Count.findOne()
+      let num = parseInt(count.answers)
+      answer_id = num + 1
+    } else {
+      answer_id = data.id
+    }
 
     let answer = new Answer({
-      answer_id: data.id,
+      answer_id: answer_id,
       answer_body: data.body,
       answer_date: data.date_written,
       answerer_name: data.answerer_name,
@@ -154,20 +178,8 @@ let answerInsert = async (question_id, data) => {
       answer_photos: data.photos || []
     })
 
-    let isPresent = false
-    answers.forEach(answer => {
-      if (!isPresent) {
-        if (answer.answer_id === parseInt(data.id)) {
-          isPresent = true
-        }
-      }
-    })
-
-    if (!isPresent) {
-      answers.push(answer)
-
-      await QandA.findByIdAndUpdate(id, { answers }).lean()
-    }
+    await QandA.findByIdAndUpdate(id, { $addToSet: { answers } }).lean()
+    incrementCount('answers', answer_id)
   }
   catch (err) { return err }
 }
@@ -254,14 +266,14 @@ let helpfulAnswer = async (answer_id) => {
 // report a question
 let reportedQuestion = async (question_id) => {
   try {
-        // query the db for the question and needed info
-        let query = { question_id }
-        let question = await QandA.findOne(query).lean()
-        let id = question._id
-        let question_reported = !question.question_reported
-        // console.log('inner test', question.question_reported, question_reported)
+    // query the db for the question and needed info
+    let query = { question_id }
+    let question = await QandA.findOne(query).lean()
+    let id = question._id
+    let question_reported = !question.question_reported
+    // console.log('inner test', question.question_reported, question_reported)
 
-        await QandA.findByIdAndUpdate(id, { question_reported }).lean()
+    await QandA.findByIdAndUpdate(id, { question_reported }).lean()
   }
   catch (err) { return err }
 }
@@ -295,7 +307,7 @@ module.exports = {
   QandA,
   Answer,
   Count,
-  count,
+  countQuestions,
   countAnswers,
   countQuery,
   updateCounts,
