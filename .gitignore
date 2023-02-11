@@ -1,5 +1,6 @@
+.env
 node_modules
 coverage
 data/final
+dump
 newrelic_agent.log
-.env

@@ -1,10 +1,17 @@
 const mongoose = require("mongoose")
 require('dotenv').config()
 const SECRET = process.env.MONGO_SECRET
-const mongoDB = `mongodb://mindi:${SECRET}@localhost/qa`
+const mongoDB = `mongodb://ec2-3-216-36-36.compute-1.amazonaws.com:27017/qa`
 
 mongoose.set('strictQuery', true)
-mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(mongoDB, {
+  family: 4,
+  authSource: "qa",
+  user: "mindi",
+  pass: SECRET,
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
 
 const db = mongoose.connection
 db.on("error", console.error.bind(console, "MongoDB connection error:"))
