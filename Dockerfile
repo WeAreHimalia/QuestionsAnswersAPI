@@ -1,9 +1,6 @@
 FROM node:16
-WORKDIR /QuestionsAnswersAPI/server
-COPY package*.json ./
-RUN npm install
-RUN npm ci --only=production
+WORKDIR /questionsanswersapi
 COPY . .
+RUN npm install
 EXPOSE 3030
 CMD ["node", "./server/index.js"]
-RUN nom run server
