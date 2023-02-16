@@ -12,7 +12,7 @@ app.use(morgan('dev', {
 
 // loader.io verification
 app.get('/loaderio-b1607a940523af4d24cd1e6a0ca41fc0.txt', (req, res) => {
-  app.status(200).send(Verified)
+  res.status(200).send(Verified)
 })
 
 // get questions
