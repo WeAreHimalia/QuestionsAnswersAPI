@@ -10,6 +10,11 @@ app.use(morgan('dev', {
   skip: function (req, res) { return res.statusCode < 400 }
 }))
 
+// loader.io verification
+app.get('/loaderio-b1607a940523af4d24cd1e6a0ca41fc0.txt', (req, res) => {
+  app.status(200).send(Verified)
+})
+
 // get questions
 app.get('/qa/questions', async (req, res) => {
   try {
