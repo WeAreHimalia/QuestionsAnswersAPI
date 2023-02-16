@@ -4,3 +4,4 @@ coverage
 data/final
 dump
 newrelic_agent.log
+Dockerfile
