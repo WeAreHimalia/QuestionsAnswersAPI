@@ -1,8 +1,8 @@
 version: "1.0"
 services:
-  web:
+  api-1:
     build: .
-    image: mindiweik/questionsanswersapi-web
+    image: mindiweik/questionsanswersapi:api-1
     ports:
      - "3030:3030"
     restart: always
