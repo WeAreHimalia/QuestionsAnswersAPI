@@ -11,7 +11,7 @@ app.use(morgan('dev', {
 }))
 
 // loader.io verification
-app.get('/loaderio-aa39b83bbb8a4a4cbff071b05496f402.txt', (req, res) => {
+app.get(`/${process.env.LOADER}/`, (req, res) => {
   res.status(200).send(process.env.LOADER)
 })
 
