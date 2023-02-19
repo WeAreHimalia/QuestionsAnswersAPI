@@ -6,9 +6,3 @@ services:
     ports:
      - "3030:3030"
     restart: always
-  api-2:
-    build: .
-    image: mindiweik/questionsanswersapi:api-2
-    ports:
-     - "3030:3030"
-    restart: always
